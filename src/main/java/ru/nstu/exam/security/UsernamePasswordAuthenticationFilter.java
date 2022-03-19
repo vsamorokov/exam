@@ -82,7 +82,11 @@ public class UsernamePasswordAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static Authentication convert(HttpServletRequest request) {
-        byte[] authHeader = request.getHeader("X-Authentication").trim().getBytes(StandardCharsets.UTF_8);
+        String header = request.getHeader("X-Authentication");
+        if(header == null) {
+            throw new BadCredentialsException("No basic authentication token");
+        }
+        byte[] authHeader = header.trim().getBytes(StandardCharsets.UTF_8);
         byte[] decoded = Base64.getDecoder().decode(authHeader);
 
         String token = new String(decoded, StandardCharsets.UTF_8);
