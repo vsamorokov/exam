@@ -8,6 +8,6 @@ import lombok.EqualsAndHashCode;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @EqualsAndHashCode(callSuper = true)
 public class TeacherBean extends EntityBean {
-    private Long id;
     private AccountBean account;
+    private DisciplineBean disciplineBean;
 }

@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class GroupBean extends EntityBean  {
+public class ThemeBean extends EntityBean {
     private String name;
+    private DisciplineBean discipline;
 }

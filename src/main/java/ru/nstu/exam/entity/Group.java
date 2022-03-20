@@ -18,6 +18,9 @@ public class Group extends PersistableEntity {
     @OneToMany(mappedBy = "group")
     private List<Student> students;
 
+    @ManyToMany(mappedBy = "groups")
+    private List<Exam> exams;
+
     @ManyToMany
     @JoinTable(name="group_discipline",
             joinColumns = @JoinColumn(name="group_id"),

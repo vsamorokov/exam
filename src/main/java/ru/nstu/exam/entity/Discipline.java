@@ -21,6 +21,9 @@ public class Discipline extends PersistableEntity {
     @OneToMany(mappedBy = "discipline")
     private List<ExamRule> examRules;
 
+    @OneToMany(mappedBy = "discipline")
+    private List<Theme> themes;
+
     @ManyToMany(mappedBy = "disciplines")
     private List<Group> groups;
 }

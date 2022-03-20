@@ -1,12 +1,13 @@
 package ru.nstu.exam.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.StudentBean;
+import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
+import ru.nstu.exam.security.IsStudent;
+import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.StudentService;
 
 import java.util.List;
@@ -30,4 +31,15 @@ public class StudentController {
         return studentService.createStudent(student);
     }
 
+    @IsStudent
+    @GetMapping("/me")
+    public StudentBean getSelf(@UserAccount Account account) {
+        return studentService.findByAccount(account);
+    }
+
+    @IsStudent
+    @GetMapping("/ticket")
+    public List<TicketBean> getTickets(@UserAccount Account account) {
+        return studentService.getTickets(account);
+    }
 }

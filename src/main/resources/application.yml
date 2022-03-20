@@ -11,6 +11,10 @@ spring:
   liquibase:
     change-log: classpath:/liquibase/changlog.xml
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
 logging:
   level:
     org.springframework.security: trace

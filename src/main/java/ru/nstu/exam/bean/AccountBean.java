@@ -14,7 +14,6 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountBean extends EntityBean {
 
-    private Long id;
     private String username;
     private String password;
     private String name;

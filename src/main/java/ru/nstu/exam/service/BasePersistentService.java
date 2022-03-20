@@ -62,8 +62,4 @@ public abstract class BasePersistentService<T extends PersistableEntity, B exten
     protected List<B> mapToBeans(List<T> entities){
         return entities.stream().map(this::map).collect(Collectors.toList());
     }
-
-    protected List<T> mapToEntities(List<B> beans){
-        return beans.stream().map(this::map).collect(Collectors.toList());
-    }
 }

@@ -2,7 +2,6 @@ package ru.nstu.exam.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import javax.persistence.*;
 import java.util.List;

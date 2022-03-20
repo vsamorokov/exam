@@ -26,9 +26,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -59,7 +58,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         objectMapper.writeValueAsString(
                                 new LoginResponse(
                                         accessTokenService.generateToken(authentication),
-                                        authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse(null)
+                                        authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(", "))
                                 )));
                 response.getWriter().flush();
             }
@@ -80,9 +79,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authorizeRequests().anyRequest().authenticated()
+                .authorizeRequests()
+                .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .anyRequest().authenticated()
                 .and()
-                .anonymous().disable()
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                 .addFilterAfter(

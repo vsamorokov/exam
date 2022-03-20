@@ -2,49 +2,36 @@ package ru.nstu.exam.service;
 
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.DisciplineBean;
+import ru.nstu.exam.bean.ExamRuleBean;
 import ru.nstu.exam.entity.Discipline;
+import ru.nstu.exam.entity.ExamRule;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Teacher;
 import ru.nstu.exam.repository.DisciplineRepository;
 
 import java.util.List;
 
+import static ru.nstu.exam.exception.ExamException.userError;
+
 @Service
 public class DisciplineService extends BasePersistentService<Discipline, DisciplineBean, DisciplineRepository> {
-    private final GroupService groupService;
-    private final TeacherService teacherService;
 
-    public DisciplineService(DisciplineRepository repository, GroupService groupService, TeacherService teacherService) {
+    public DisciplineService(DisciplineRepository repository) {
         super(repository);
-        this.groupService = groupService;
-        this.teacherService = teacherService;
     }
 
     public DisciplineBean createDiscipline(DisciplineBean disciplineBean){
-        return null;
+        return map(save(map(disciplineBean)));
     }
 
-    public List<DisciplineBean> findByGroup(Long groupId) {
-        if (groupId == null) {
-            return null;
-        }
-        Group group = groupService.getById(groupId);
-        List<Discipline> disciplines = getRepository().findByGroupsContaining(group);
-        return mapToBeans(disciplines);
-    }
-
-    public List<DisciplineBean> findByTeacher(Long teacherId) {
-        if (teacherId == null) {
-            return null;
-        }
-        Teacher teacher = teacherService.getById(teacherId);
-        List<Discipline> disciplines = getRepository().findByTeachersContaining(teacher);
-        return mapToBeans(disciplines);
+    public List<DisciplineBean> findByTeacher(Teacher teacher){
+        return mapToBeans(getRepository().findByTeachersContaining(teacher));
     }
 
     @Override
     protected DisciplineBean map(Discipline entity) {
         DisciplineBean disciplineBean = new DisciplineBean();
+        disciplineBean.setId(entity.getId());
         disciplineBean.setName(entity.getName());
         return disciplineBean;
     }

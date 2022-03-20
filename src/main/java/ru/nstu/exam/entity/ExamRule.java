@@ -33,4 +33,7 @@ public class ExamRule extends PersistableEntity {
 
     @Column(name = "duration", nullable = false)
     private Integer duration; // minutes
+
+    @Column(name = "minimal_rating", nullable = false)
+    private Integer minimalRating;
 }

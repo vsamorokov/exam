@@ -13,7 +13,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class ExamPeriod extends PersistableEntity {
 
+    @Column(name="\"start\"")
     private LocalDateTime start;
+    @Column(name="\"end\"")
     private LocalDateTime end;
 
     @OneToMany(mappedBy = "examPeriod")

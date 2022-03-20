@@ -17,4 +17,8 @@ public class ExamException extends RuntimeException {
         throw new ExamException(message, HttpStatus.BAD_REQUEST);
     }
 
+    public static <T> T serverError(String message) {
+        throw new ExamException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }

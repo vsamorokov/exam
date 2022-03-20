@@ -7,7 +7,15 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class GroupBean extends EntityBean  {
-    private String name;
+public class TicketBean extends EntityBean {
+
+    private Integer semesterRating;
+
+    private Integer examRating;
+
+    private Boolean allowed;
+
+    private ExamPeriodBean examPeriod;
+
+    private StudentBean student;
 }

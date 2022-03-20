@@ -1,7 +1,7 @@
 create sequence HIBERNATE_SEQUENCE
-    minvalue 100000
+    minvalue 1
     maxvalue 9999999999999999
-    start with 100060
+    start with 1
     increment by 1
     cache 20;
 
@@ -50,13 +50,23 @@ create table artefact
     artefact_type varchar(255) not null
 );
 
-create table theme
+create table discipline
 (
     id      bigserial primary key,
     deleted boolean      not null,
     created timestamp    not null,
     updated timestamp    not null,
     name    varchar(255) not null
+);
+
+create table theme
+(
+    id            bigserial primary key,
+    deleted       boolean                           not null,
+    created       timestamp                         not null,
+    updated       timestamp                         not null,
+    name          varchar(255)                      not null,
+    discipline_id bigint references discipline (id) not null
 );
 
 create table task
@@ -70,15 +80,6 @@ create table task
     artefact_id bigint                       not null,
     task_type   varchar(255)                 not null,
     theme_id    bigint references theme (id) not null
-);
-
-create table discipline
-(
-    id      bigserial primary key,
-    deleted boolean      not null,
-    created timestamp    not null,
-    updated timestamp    not null,
-    name    varchar(255) not null
 );
 
 create table teacher_discipline
@@ -131,6 +132,13 @@ create table exam
     updated      timestamp                        not null,
     exam_rule_id bigint references exam_rule (id) not null,
     teacher_id   bigint references teacher (id)   not null
+);
+
+create table exam_group
+(
+    id       bigserial primary key,
+    exam_id  bigint references exam (id)    not null,
+    group_id bigint references "group" (id) not null
 );
 
 create table exam_period

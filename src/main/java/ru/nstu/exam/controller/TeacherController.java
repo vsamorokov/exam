@@ -5,7 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
+import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
+import ru.nstu.exam.security.IsTeacher;
+import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.DisciplineService;
 import ru.nstu.exam.service.TeacherService;
 
@@ -31,9 +34,10 @@ public class TeacherController {
         return teacherService.createTeacher(teacher);
     }
 
-    @GetMapping("/{teacherId}/discipline")
-    public List<DisciplineBean> getDisciplines(@PathVariable Long teacherId) {
-        return disciplineService.findByTeacher(teacherId);
+    @IsTeacher
+    @GetMapping("/discipline")
+    public List<DisciplineBean> getDisciplines(@UserAccount Account account) {
+        return teacherService.findDisciplines(account);
     }
 
 //    @GetMapping("/{teacherId}/exam")

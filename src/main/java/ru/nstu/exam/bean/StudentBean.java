@@ -11,8 +11,6 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode(callSuper = true)
 public class StudentBean extends EntityBean {
 
-    private Long id;
-
     private AccountBean account;
 
     private GroupBean group;

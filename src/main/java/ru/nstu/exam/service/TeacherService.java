@@ -2,6 +2,7 @@ package ru.nstu.exam.service;
 
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
+import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Teacher;
@@ -16,10 +17,16 @@ import static ru.nstu.exam.exception.ExamException.userError;
 @Service
 public class TeacherService extends BasePersistentService<Teacher, TeacherBean, TeacherRepository> {
     private final AccountService accountService;
+    private final DisciplineService disciplineService;
 
-    public TeacherService(TeacherRepository repository, AccountService accountService) {
+    public TeacherService(TeacherRepository repository, AccountService accountService, DisciplineService disciplineService) {
         super(repository);
         this.accountService = accountService;
+        this.disciplineService = disciplineService;
+    }
+
+    public Teacher findByAccount(Account account) {
+        return getRepository().findByAccount(account);
     }
 
     public List<TeacherBean> addTeachers(List<TeacherBean> teachers) {
@@ -44,6 +51,14 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
         return map(save(teacher));
     }
 
+    public List<DisciplineBean> findDisciplines(Account account) {
+        Teacher teacher = findByAccount(account);
+        if(teacher == null) {
+            userError("No teacher found");
+        }
+        return disciplineService.findByTeacher(teacher);
+    }
+
     @Override
     protected TeacherBean map(Teacher entity) {
         TeacherBean teacherBean = new TeacherBean();
@@ -56,4 +71,5 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
     protected Teacher map(TeacherBean bean) {
         return new Teacher();
     }
+
 }

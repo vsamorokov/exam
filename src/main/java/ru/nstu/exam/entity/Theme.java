@@ -4,10 +4,7 @@ package ru.nstu.exam.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.List;
 
 @Data
@@ -21,4 +18,7 @@ public class Theme extends PersistableEntity {
 
     @OneToMany(mappedBy = "theme")
     private List<Task> tasks;
+
+    @ManyToOne
+    private Discipline discipline;
 }

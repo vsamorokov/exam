@@ -3,7 +3,7 @@ package ru.nstu.exam.service;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.ChangePasswordBean;
+import ru.nstu.exam.bean.TicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Student;
@@ -21,12 +21,14 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
 
     private final GroupService groupService;
     private final AccountService accountService;
+    private final TicketService ticketService;
 
 
-    public StudentService(StudentRepository repository, GroupService groupService, AccountService accountService) {
+    public StudentService(StudentRepository repository, GroupService groupService, AccountService accountService, TicketService ticketService) {
         super(repository);
         this.groupService = groupService;
         this.accountService = accountService;
+        this.ticketService = ticketService;
     }
 
     public List<StudentBean> findByGroup(Long groupId) {
@@ -59,6 +61,18 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         student.setAccount(account);
         student.setGroup(group);
         return map(save(student));
+    }
+
+    public StudentBean findByAccount(Account account) {
+        return map(getRepository().findByAccount(account));
+    }
+
+    public List<TicketBean> getTickets(Account account){
+        Student student = getRepository().findByAccount(account);
+        if(student == null) {
+            userError("No student found");
+        }
+        return ticketService.getStudentTickets(student);
     }
 
     @Override
