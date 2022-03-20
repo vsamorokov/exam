@@ -114,7 +114,8 @@ create table exam_rule
     discipline_id  bigint references discipline (id) not null,
     question_count int,
     exercise_count int,
-    duration       int                               not null
+    duration       int                               not null,
+    minimal_rating int
 );
 
 create table exam_rule_theme
