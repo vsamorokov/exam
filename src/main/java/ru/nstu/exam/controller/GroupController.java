@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.GroupBean;
 import ru.nstu.exam.bean.StudentBean;
 import ru.nstu.exam.security.IsAdmin;
+import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.GroupService;
 import ru.nstu.exam.service.StudentService;
 
@@ -28,6 +29,7 @@ public class GroupController {
         return groupService.createGroup(groupBean);
     }
 
+    @IsTeacher
     @GetMapping("/{groupId}/student")
     public List<StudentBean> getStudents(@PathVariable Long groupId) {
         return studentService.findByGroup(groupId);

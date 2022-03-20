@@ -2,6 +2,7 @@ package ru.nstu.exam.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Where;
 import ru.nstu.exam.enums.TaskType;
 
 import javax.persistence.*;
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @Entity
 @Table(name = "task")
 @EqualsAndHashCode(callSuper = true)
+@Where(clause = "deleted = false")
 public class Task extends PersistableEntity {
 
     @Column(name = "cost", nullable = false)

@@ -3,8 +3,6 @@ package ru.nstu.exam.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Where;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import javax.persistence.*;
@@ -14,7 +12,6 @@ import java.time.ZoneId;
 
 @Data
 @MappedSuperclass
-@Where(clause = "deleted = false")
 @EqualsAndHashCode(callSuper = true)
 public class PersistableEntity extends AbstractPersistable<Long> {
 

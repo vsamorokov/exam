@@ -3,6 +3,7 @@ package ru.nstu.exam.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "student")
 @EqualsAndHashCode(callSuper = true)
+@Where(clause = "deleted = false")
 public class Student extends PersistableEntity {
 
     @OneToOne

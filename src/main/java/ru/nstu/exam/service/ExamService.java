@@ -2,10 +2,7 @@ package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.ExamBean;
-import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.GroupBean;
-import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.repository.ExamPeriodRepository;
 import ru.nstu.exam.repository.ExamRepository;
@@ -35,41 +32,52 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         this.examPeriodRepository = examPeriodRepository;
     }
 
+    public List<ExamBean> findAll(Account account) {
+        if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
+            userError("Only teachers can get exams");
+        }
+        Teacher teacher = teacherService.findByAccount(account);
+        if (teacher == null) {
+            serverError("No teacher found");
+        }
+        return mapToBeans(getRepository().findAllByTeacher(teacher));
+    }
+
     public ExamBean createExam(ExamBean examBean, Account account) {
-        if(!account.getRoles().contains(UserRole.ROLE_TEACHER)){
+        if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
             serverError("Not teacher cannot create exam");
         }
         Teacher teacher = teacherService.findByAccount(account);
-        if(teacher == null) {
+        if (teacher == null) {
             serverError("No teacher found");
         }
         ExamRuleBean examRuleBean = examBean.getExamRule();
-        if(examRuleBean == null) {
+        if (examRuleBean == null) {
             userError("Exam must have exam rule");
         }
-        if(examRuleBean.getId() == null) {
+        if (examRuleBean.getId() == null) {
             userError("Exam rule must have an id");
         }
         ExamRule examRule = examRuleService.findById(examRuleBean.getId());
-        if(examRule == null) {
+        if (examRule == null) {
             userError("No exam rule with provided id");
         }
         List<GroupBean> groupBeans = examBean.getGroups();
-        if(CollectionUtils.isEmpty(groupBeans)) {
+        if (CollectionUtils.isEmpty(groupBeans)) {
             userError("Exam must have at least 1 group");
         }
         List<Group> groups = new ArrayList<>(groupBeans.size());
         for (GroupBean groupBean : groupBeans) {
-            if(groupBean.getId() == null) {
+            if (groupBean.getId() == null) {
                 userError("Group must have an id");
             }
             Group group = groupService.findById(groupBean.getId());
-            if(group == null) {
+            if (group == null) {
                 userError("No group with id " + groupBean.getId());
             }
             groups.add(group);
         }
-        if(examBean.getStartTime() == null) {
+        if (examBean.getStartTime() == null) {
             userError("Empty start date");
         }
 
@@ -96,7 +104,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
     public List<TicketBean> findUnPassed(Long examId) {
         Exam exam = findById(examId);
-        if(exam == null) {
+        if (exam == null) {
             userError("No exam found");
         }
         return ticketService.getUnPassed(exam);
@@ -117,4 +125,26 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return new Exam();
     }
 
+    public List<ExamPeriodBean> findPeriods(Long examId) {
+        Exam exam = findById(examId);
+        if (exam == null) {
+            userError("No exam found");
+        }
+        List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
+        List<ExamPeriodBean> beans = new ArrayList<>(periods.size());
+        for (ExamPeriod examPeriod : periods) {
+            ExamPeriodBean examPeriodBean = new ExamPeriodBean();
+            examPeriodBean.setId(examPeriod.getId());
+            examPeriodBean.setStart(examPeriod.getStart());
+            examPeriodBean.setEnd(examPeriod.getEnd());
+            beans.add(examPeriodBean);
+        }
+        return beans;
+    }
+
+    public List<TicketBean> findTickets(Long periodId) {
+        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No exam period found"));
+
+        return ticketService.findByPeriod(period);
+    }
 }

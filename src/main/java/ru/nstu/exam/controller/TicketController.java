@@ -1,9 +1,15 @@
 package ru.nstu.exam.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.service.TicketService;
+
+import java.util.List;
 
 
 @RestController
@@ -12,5 +18,12 @@ import ru.nstu.exam.service.TicketService;
 public class TicketController {
 
     private final TicketService ticketService;
+
+    @IsAdmin
+    @PostMapping("/rating")
+    public void updateTicketsRating(@RequestBody List<TicketBean> ticketBeans) {
+        ticketService.update(ticketBeans);
+    }
+
 
 }

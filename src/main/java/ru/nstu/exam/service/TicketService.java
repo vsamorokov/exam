@@ -11,6 +11,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static liquibase.repackaged.org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static ru.nstu.exam.exception.ExamException.userError;
+
 @Service
 public class TicketService extends BasePersistentService<Ticket, TicketBean, TicketRepository> {
     private final AnswerService answerService;
@@ -42,6 +45,25 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         ticket = save(ticket);
         answerService.generateAnswers(ticket, examRule.getThemes());
     }
+
+    public void update(List<TicketBean> ticketBeans) {
+        for (TicketBean ticketBean : emptyIfNull(ticketBeans)) {
+            if (ticketBean == null) {
+                userError("Ticket cannot be null");
+            }
+            if (ticketBean.getId() == null) {
+                userError("Ticket id cannot be null");
+            }
+            Ticket ticket = findById(ticketBean.getId());
+            if (ticket != null) {
+                ticket.setSemesterRating(ticketBean.getSemesterRating());
+                ticket.setExamRating(ticketBean.getSemesterRating());
+                ticket.setAllowed(ticketBean.getAllowed());
+                save(ticket);
+            }
+        }
+    }
+
 
     public List<TicketBean> getUnPassed(Exam exam) {
         return mapToBeans(exam.getExamPeriods().stream()
@@ -80,4 +102,7 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return new Ticket();
     }
 
+    public List<TicketBean> findByPeriod(ExamPeriod period) {
+        return mapToBeans(getRepository().findAllByExamPeriod(period));
+    }
 }

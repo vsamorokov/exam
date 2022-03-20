@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.nstu.exam.bean.ThemeBean;
+import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.service.ThemeService;
 
 @RestController
@@ -14,6 +15,7 @@ import ru.nstu.exam.service.ThemeService;
 public class ThemeController {
     private final ThemeService themeService;
 
+    @IsAdmin
     @PostMapping
     public ThemeBean create(@RequestBody ThemeBean themeBean) {
         return themeService.createTheme(themeBean);

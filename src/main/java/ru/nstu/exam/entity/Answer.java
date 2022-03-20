@@ -2,6 +2,7 @@ package ru.nstu.exam.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 
@@ -9,6 +10,7 @@ import javax.persistence.*;
 @Entity
 @Table(name="answer")
 @EqualsAndHashCode(callSuper = true)
+@Where(clause = "deleted = false")
 public class Answer extends PersistableEntity {
 
     @ManyToOne
