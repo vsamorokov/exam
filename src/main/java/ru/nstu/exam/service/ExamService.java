@@ -238,6 +238,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             examPeriodBean.setId(examPeriod.getId());
             examPeriodBean.setStart(examPeriod.getStart());
             examPeriodBean.setEnd(examPeriod.getEnd());
+            examPeriodBean.setState(examPeriod.getState());
             beans.add(examPeriodBean);
         }
         return beans;
