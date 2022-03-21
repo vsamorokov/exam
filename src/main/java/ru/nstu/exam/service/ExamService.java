@@ -253,6 +253,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     protected ExamBean map(Exam entity) {
         ExamBean examBean = new ExamBean();
         examBean.setId(entity.getId());
+        examBean.setDiscipline(disciplineService.map(entity.getDiscipline()));
         examBean.setExamRule(examRuleService.map(entity.getExamRule()));
         examBean.setTeacher(teacherService.map(entity.getTeacher()));
         examBean.setGroups(groupService.mapToBeans(entity.getGroups()));
