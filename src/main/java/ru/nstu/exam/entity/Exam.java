@@ -22,12 +22,16 @@ public class Exam extends PersistableEntity {
     private ExamRule examRule;
 
     @ManyToOne
+    @JoinColumn(name = "discipline_id")
+    private Discipline discipline;
+
+    @ManyToOne
     @JoinColumn(name = "teacher_id")
     private Teacher teacher;
 
     @ManyToMany
     @JoinTable(
-            name="exam_group",
+            name = "exam_group",
             joinColumns = @JoinColumn(name = "exam_id"),
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )

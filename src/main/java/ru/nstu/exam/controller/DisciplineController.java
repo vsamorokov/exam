@@ -21,7 +21,6 @@ public class DisciplineController {
     private final DisciplineService disciplineService;
     private final GroupService groupService;
 
-
     @IsAdmin
     @PostMapping
     public DisciplineBean create(@RequestBody DisciplineBean disciplineBean){

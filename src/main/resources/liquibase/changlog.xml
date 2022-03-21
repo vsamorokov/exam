@@ -4,8 +4,11 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <changeSet id="1" author="vsamorokov" >
+    <changeSet id="1" author="vsamorokov">
         <sqlFile path="start-ddl.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="2" author="vsamorokov">
+        <sqlFile path="add_discipline_to_exam.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
 </databaseChangeLog>

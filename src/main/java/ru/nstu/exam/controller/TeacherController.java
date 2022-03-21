@@ -9,7 +9,6 @@ import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
-import ru.nstu.exam.service.DisciplineService;
 import ru.nstu.exam.service.TeacherService;
 
 import java.util.List;
@@ -20,7 +19,6 @@ import java.util.List;
 public class TeacherController {
 
     private final TeacherService teacherService;
-    private final DisciplineService disciplineService;
 
     @IsAdmin
     @PostMapping("/bulk")
@@ -40,9 +38,10 @@ public class TeacherController {
         return teacherService.findDisciplines(account);
     }
 
-//    @GetMapping("/{teacherId}/exam")
-//    public List<ExamBean> getExams(@PathVariable Long teacherId) {
-//        return examService.findByTeacher(teacherId);
-//    }
+    @IsTeacher
+    @GetMapping("/me")
+    public TeacherBean getSelf(@UserAccount Account account) {
+        return teacherService.getSelf(account);
+    }
 
 }

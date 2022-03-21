@@ -31,16 +31,27 @@ public class ExamController {
     }
 
     @IsTeacher
-    @GetMapping("/exam/{examId}/un-passed")
-    public List<TicketBean> getUnPassed(@PathVariable Long examId) {
-        return examService.findUnPassed(examId);
+    @PutMapping("/exam/{examId}")
+    public ExamBean updateExam(@PathVariable Long examId, @RequestBody ExamBean examBean, @UserAccount Account account) {
+        return examService.updateExam(examId, examBean, account);
     }
-
 
     @IsTeacher
     @GetMapping("/exam/{examId}/period")
     public List<ExamPeriodBean> getPeriods(@PathVariable Long examId) {
         return examService.findPeriods(examId);
+    }
+
+    @IsTeacher
+    @PutMapping("/exam/{examId}/period/{periodId}")
+    public void updatePeriod(@PathVariable Long examId, @PathVariable Long periodId, @RequestBody ExamPeriodBean examPeriodBean) {
+        examService.updatePeriod(examId, periodId, examPeriodBean);
+    }
+
+    @IsTeacher
+    @GetMapping("/exam/{examId}/un-passed")
+    public List<TicketBean> getUnPassed(@PathVariable Long examId) {
+        return examService.findUnPassed(examId);
     }
 
     @IsTeacher

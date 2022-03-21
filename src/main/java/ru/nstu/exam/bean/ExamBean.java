@@ -17,8 +17,10 @@ public class ExamBean extends EntityBean {
 
     private TeacherBean teacher;
 
+    private DisciplineBean discipline;
+
     private List<GroupBean> groups;
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime startTime; // for first creation
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import ru.nstu.exam.enums.ExamPeriodState;
 
 import java.time.LocalDateTime;
 
@@ -21,4 +22,5 @@ public class ExamPeriodBean extends EntityBean {
 
     private ExamBean exam;
 
+    private ExamPeriodState state;
 }

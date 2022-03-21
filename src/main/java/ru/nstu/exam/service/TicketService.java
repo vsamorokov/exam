@@ -69,7 +69,7 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return mapToBeans(exam.getExamPeriods().stream()
                 .map(ExamPeriod::getTickets)
                 .flatMap(Collection::stream)
-                .filter(t -> new Integer(0).equals(t.getExamRating()))
+                .filter(t -> exam.getExamRule().getMinimalRating() > (t.getExamRating()))
                 .collect(Collectors.toList()));
     }
 
