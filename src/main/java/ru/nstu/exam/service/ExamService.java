@@ -210,11 +210,27 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         if (!ExamPeriodState.REDACTION.equals(period.getState())) {
             userError("Wrong state");
         }
-        if (bean.getStart() != null) {
+        if (bean.getStart() == null) {
             userError("Start date must be not null");
         }
         period.setStart(bean.getStart());
         period.setEnd(bean.getStart().plusMinutes(exam.getExamRule().getDuration()));
+        examPeriodRepository.save(period);
+    }
+
+    public void updateState(Long examId, Long periodId, ExamPeriodBean bean) {
+        Exam exam = this.findById(examId);
+        if (exam == null) {
+            userError("No exam found");
+        }
+        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
+        if (!Objects.equals(period.getExam().getId(), exam.getId())) {
+            userError("Exam period is from another exam");
+        }
+        if (!bean.getState().isAllowed(period)) {
+            userError("Wrong state");
+        }
+        period.setState(bean.getState());
         examPeriodRepository.save(period);
     }
 

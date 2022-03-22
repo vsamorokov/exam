@@ -12,6 +12,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExamRuleBean extends EntityBean {
 
+    private String name;
+
     private List<ThemeBean> themes;
 
     private DisciplineBean discipline;

@@ -38,7 +38,6 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
         if(discipline == null) {
             userError("No discipline with specified id");
         }
-
         List<ThemeBean> themeBeans = examRuleBean.getThemes();
         if(CollectionUtils.isEmpty(themeBeans)){
             userError("Exam rule must have at least 1 theme");
@@ -75,6 +74,7 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
     protected ExamRuleBean map(ExamRule entity) {
         ExamRuleBean examRuleBean = new ExamRuleBean();
         examRuleBean.setId(entity.getId());
+        examRuleBean.setName(entity.getName());
         examRuleBean.setDuration(entity.getDuration());
         examRuleBean.setExerciseCount(entity.getExerciseCount());
         examRuleBean.setQuestionCount(entity.getQuestionCount());
@@ -87,6 +87,7 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
     @Override
     protected ExamRule map(ExamRuleBean bean) {
         ExamRule examRule = new ExamRule();
+        examRule.setName(bean.getName());
         examRule.setExerciseCount(bean.getExerciseCount());
         examRule.setQuestionCount(bean.getQuestionCount());
         examRule.setDuration(bean.getDuration());

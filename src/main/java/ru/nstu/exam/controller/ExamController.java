@@ -49,6 +49,12 @@ public class ExamController {
     }
 
     @IsTeacher
+    @PutMapping("/exam/{examId}/period/{periodId}/state")
+    public void updateState(@PathVariable Long examId, @PathVariable Long periodId, @RequestBody ExamPeriodBean examPeriodBean) {
+        examService.updateState(examId, periodId, examPeriodBean);
+    }
+
+    @IsTeacher
     @GetMapping("/exam/{examId}/un-passed")
     public List<TicketBean> getUnPassed(@PathVariable Long examId) {
         return examService.findUnPassed(examId);

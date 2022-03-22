@@ -15,6 +15,9 @@ import java.util.List;
 @Where(clause = "deleted = false")
 public class ExamRule extends PersistableEntity {
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @ManyToMany
     @JoinTable(
             name = "exam_rule_theme",

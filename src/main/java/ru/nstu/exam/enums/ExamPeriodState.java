@@ -15,7 +15,7 @@ public enum ExamPeriodState {
 
     private final int order;
 
-    public boolean isAllowed(ExamPeriod examPeriod, ExamPeriodState nextState) {
-        return (examPeriod.getState().order + 1) % 6 == nextState.order;
+    public boolean isAllowed(ExamPeriod examPeriod) {
+        return examPeriod.getState().order + 1 == this.order;
     }
 }

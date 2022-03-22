@@ -1,14 +1,17 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
 import ru.nstu.exam.entity.Account;
+import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.Teacher;
 import ru.nstu.exam.repository.TeacherRepository;
 import ru.nstu.exam.security.UserRole;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +41,22 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
     }
 
     public TeacherBean createTeacher(TeacherBean teacherBean) {
+        List<DisciplineBean> disciplineBeans = teacherBean.getDisciplineBeans();
+        if (CollectionUtils.isEmpty(disciplineBeans)) {
+            userError("Teacher must have disciplines");
+        }
+        List<Discipline> disciplines = new ArrayList<>(disciplineBeans.size());
+        for (DisciplineBean disciplineBean : disciplineBeans) {
+            if (disciplineBean.getId() == null) {
+                userError("Discipline must have an id");
+            }
+            Discipline discipline = disciplineService.findById(disciplineBean.getId());
+            if (discipline == null) {
+                userError("No discipline found");
+            }
+            disciplines.add(discipline);
+        }
+
         if (teacherBean.getAccount() == null) {
             userError("Teacher must have account");
         }
@@ -52,6 +71,7 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
 
         Teacher teacher = map(teacherBean);
         teacher.setAccount(account);
+        teacher.setDisciplines(disciplines);
         return map(save(teacher));
     }
 
