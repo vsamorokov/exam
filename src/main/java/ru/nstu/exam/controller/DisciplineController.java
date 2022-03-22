@@ -21,15 +21,20 @@ public class DisciplineController {
     private final DisciplineService disciplineService;
     private final GroupService groupService;
 
+    @GetMapping
+    public List<DisciplineBean> getAll() {
+        return disciplineService.findAll();
+    }
+
     @IsAdmin
     @PostMapping
-    public DisciplineBean create(@RequestBody DisciplineBean disciplineBean){
+    public DisciplineBean create(@RequestBody DisciplineBean disciplineBean) {
         return disciplineService.createDiscipline(disciplineBean);
     }
 
     @IsTeacher
     @GetMapping("/{disciplineId}/exam-rule")
-    public List<ExamRuleBean> findExamRules(@PathVariable Long disciplineId){
+    public List<ExamRuleBean> findExamRules(@PathVariable Long disciplineId) {
         return examRuleService.findByDiscipline(disciplineId);
     }
 

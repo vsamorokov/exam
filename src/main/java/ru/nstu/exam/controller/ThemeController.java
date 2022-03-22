@@ -1,13 +1,12 @@
 package ru.nstu.exam.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.ThemeBean;
-import ru.nstu.exam.security.IsAdmin;
+import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.ThemeService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/theme")
@@ -15,7 +14,13 @@ import ru.nstu.exam.service.ThemeService;
 public class ThemeController {
     private final ThemeService themeService;
 
-    @IsAdmin
+    @IsTeacher
+    @GetMapping
+    public List<ThemeBean> getAll() {
+        return themeService.findAll();
+    }
+
+    @IsTeacher
     @PostMapping
     public ThemeBean create(@RequestBody ThemeBean themeBean) {
         return themeService.createTheme(themeBean);

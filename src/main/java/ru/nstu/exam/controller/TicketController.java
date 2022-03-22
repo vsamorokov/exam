@@ -25,5 +25,4 @@ public class TicketController {
         ticketService.update(ticketBeans);
     }
 
-
 }
