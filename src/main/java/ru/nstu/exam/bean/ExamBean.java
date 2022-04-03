@@ -1,11 +1,9 @@
 package ru.nstu.exam.bean;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -21,6 +19,5 @@ public class ExamBean extends EntityBean {
 
     private List<GroupBean> groups;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-    private LocalDateTime startTime; // for first creation
+    private Long startTime; // for first creation
 }

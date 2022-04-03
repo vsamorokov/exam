@@ -10,7 +10,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -28,19 +28,20 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private final AuthenticationManager authenticationManager;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
-
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain
+    ) throws ServletException, IOException {
         try {
             Authentication authRequest = convert(request);
-
             if (authRequest == null) {
                 this.logger.trace("Did not process authentication request since failed to find "
                         + "token in Token Authentication header");
                 chain.doFilter(request, response);
                 return;
             }
-
-            this.logger.trace(LogMessage.format("Found username '%s' in Token Authentication header", authRequest.getCredentials()));
+            this.logger.trace(LogMessage.format("Found token '%s' in Token Authentication header", authRequest.getCredentials()));
             Authentication authResult = this.authenticationManager.authenticate(authRequest);
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authResult);

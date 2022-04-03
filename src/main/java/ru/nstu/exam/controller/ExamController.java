@@ -1,9 +1,13 @@
 package ru.nstu.exam.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.ExamBean;
 import ru.nstu.exam.bean.ExamPeriodBean;
+import ru.nstu.exam.bean.MessageBean;
 import ru.nstu.exam.bean.TicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
@@ -26,13 +30,16 @@ public class ExamController {
 
     @IsTeacher
     @PostMapping("/exam")
-    public ExamBean createExam(@RequestBody ExamBean examBean, @UserAccount Account account) {
+    public ExamBean createExam(@RequestBody ExamBean examBean,
+                               @UserAccount Account account) {
         return examService.createExam(examBean, account);
     }
 
     @IsTeacher
     @PutMapping("/exam/{examId}")
-    public ExamBean updateExam(@PathVariable Long examId, @RequestBody ExamBean examBean, @UserAccount Account account) {
+    public ExamBean updateExam(@PathVariable Long examId,
+                               @RequestBody ExamBean examBean,
+                               @UserAccount Account account) {
         return examService.updateExam(examId, examBean, account);
     }
 
@@ -64,5 +71,21 @@ public class ExamController {
     @GetMapping("/period/{periodId}/ticket")
     public List<TicketBean> getTickets(@PathVariable Long periodId) {
         return examService.findTickets(periodId);
+    }
+
+    @GetMapping("/period/{periodId}/message")
+    public Page<MessageBean> getMessages(@PathVariable Long periodId,
+                                         @UserAccount Account account,
+                                         @PageableDefault Pageable pageable
+    ) {
+        return examService.findAllMessages(periodId, account, pageable);
+    }
+
+    @PostMapping("/period/{periodId}/message")
+    public MessageBean newMessage(@PathVariable Long periodId,
+                                  @RequestBody MessageBean messageBean,
+                                  @UserAccount Account account
+    ) {
+        return examService.newMessage(periodId, messageBean, account);
     }
 }

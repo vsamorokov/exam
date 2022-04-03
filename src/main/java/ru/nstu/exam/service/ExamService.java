@@ -1,21 +1,28 @@
 package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.*;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.ExamPeriodState;
+import ru.nstu.exam.exception.ExamException;
 import ru.nstu.exam.repository.ExamPeriodRepository;
 import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.security.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.serverError;
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.toLocalDateTime;
+import static ru.nstu.exam.utils.Utils.toMillis;
 
 @Service
 public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepository> {
@@ -25,8 +32,9 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     private final DisciplineService disciplineService;
     private final TicketService ticketService;
     private final ExamPeriodRepository examPeriodRepository;
+    private final MessageService messageService;
 
-    public ExamService(ExamRepository repository, ExamRuleService examRuleService, TeacherService teacherService, GroupService groupService, DisciplineService disciplineService, TicketService ticketService, ExamPeriodRepository examPeriodRepository) {
+    public ExamService(ExamRepository repository, ExamRuleService examRuleService, TeacherService teacherService, GroupService groupService, DisciplineService disciplineService, TicketService ticketService, ExamPeriodRepository examPeriodRepository, MessageService messageService) {
         super(repository);
         this.examRuleService = examRuleService;
         this.teacherService = teacherService;
@@ -34,12 +42,10 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         this.disciplineService = disciplineService;
         this.ticketService = ticketService;
         this.examPeriodRepository = examPeriodRepository;
+        this.messageService = messageService;
     }
 
     public List<ExamBean> findAll(Account account) {
-        if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            userError("Only teachers can get exams");
-        }
         Teacher teacher = teacherService.findByAccount(account);
         if (teacher == null) {
             serverError("No teacher found");
@@ -104,7 +110,12 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
         Exam saved = save(exam);
 
-        createPeriod(saved, examBean.getStartTime(), examRule);
+        try {
+            createPeriod(saved, examBean.getStartTime(), examRule);
+        } catch (ExamException e) {
+            delete(saved);
+            throw e;
+        }
 
         return map(saved);
     }
@@ -174,17 +185,23 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(saved);
     }
 
-    private void createPeriod(Exam exam, LocalDateTime start, ExamRule examRule) {
+    private void createPeriod(Exam exam, Long start, ExamRule examRule) {
         ExamPeriod examPeriod = new ExamPeriod();
-        examPeriod.setStart(start);
-        examPeriod.setEnd(start.plusMinutes(examRule.getDuration()));
+        examPeriod.setStart(toLocalDateTime(start));
+        examPeriod.setEnd(toLocalDateTime(start).plusMinutes(examRule.getDuration()));
         examPeriod.setExam(exam);
         examPeriod.setState(ExamPeriodState.REDACTION);
         examPeriod = examPeriodRepository.save(examPeriod);
-        ticketService.generateTickets(examRule, examPeriod, exam.getGroups());
+        try {
+            ticketService.generateTickets(examRule, examPeriod, exam.getGroups());
+        } catch (Exception e) {
+            examPeriod.setDeleted(true);
+            examPeriodRepository.save(examPeriod);
+            throw e;
+        }
     }
 
-    private void updatePeriod(Exam exam, LocalDateTime start, ExamRule examRule) {
+    private void updatePeriod(Exam exam, Long start, ExamRule examRule) {
         List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
         if (periods.size() != 1) {
             userError("Cannot modify exam that already had been closed");
@@ -193,8 +210,10 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         if (!ExamPeriodState.REDACTION.equals(period.getState())) {
             userError("Wrong state");
         }
-        period.setStart(start);
-        period.setEnd(start.plusMinutes(examRule.getDuration()));
+        LocalDateTime startTime = toLocalDateTime(start);
+
+        period.setStart(startTime);
+        period.setEnd(startTime.plusMinutes(examRule.getDuration()));
         examPeriodRepository.save(period);
     }
 
@@ -213,8 +232,9 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         if (bean.getStart() == null) {
             userError("Start date must be not null");
         }
-        period.setStart(bean.getStart());
-        period.setEnd(bean.getStart().plusMinutes(exam.getExamRule().getDuration()));
+        LocalDateTime start = toLocalDateTime(bean.getStart());
+        period.setStart(start);
+        period.setEnd(start.plusMinutes(exam.getExamRule().getDuration()));
         examPeriodRepository.save(period);
     }
 
@@ -252,8 +272,8 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         for (ExamPeriod examPeriod : periods) {
             ExamPeriodBean examPeriodBean = new ExamPeriodBean();
             examPeriodBean.setId(examPeriod.getId());
-            examPeriodBean.setStart(examPeriod.getStart());
-            examPeriodBean.setEnd(examPeriod.getEnd());
+            examPeriodBean.setStart(toMillis(examPeriod.getStart()));
+            examPeriodBean.setEnd(toMillis(examPeriod.getEnd()));
             examPeriodBean.setState(examPeriod.getState());
             beans.add(examPeriodBean);
         }
@@ -264,6 +284,68 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No exam period found"));
 
         return ticketService.findByPeriod(period);
+    }
+
+    public Page<MessageBean> findAllMessages(Long periodId, Account account, Pageable pageable) {
+        ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
+        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
+            if (examPeriod.getTickets().stream()
+                    .noneMatch(t ->
+                            Objects.equals(account.getId(), t.getStudent().getAccount().getId())
+                    )
+            ) {
+                userError("That student is not allowed to read there");
+            }
+        }
+        if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
+            if (!Objects.equals(examPeriod.getExam().getTeacher().getAccount().getId(), account.getId())) {
+                userError("That teacher is not allowed to read there");
+            }
+        }
+        return messageService.findAllByExamPeriod(examPeriod, pageable);
+    }
+
+    public MessageBean newMessage(Long periodId, MessageBean messageBean, Account account) {
+        ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
+        if (!ExamPeriodState.PROGRESS.equals(examPeriod.getState())) {
+            userError("Wrong state");
+        }
+        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
+            if (examPeriod.getTickets().stream()
+                    .noneMatch(t ->
+                            Objects.equals(account.getId(), t.getStudent().getAccount().getId())
+                    )
+            ) {
+                userError("That student is not allowed to write there");
+            }
+            return messageService.createExamPeriodMessage(messageBean, examPeriod, account);
+        } else if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
+            if (!Objects.equals(examPeriod.getExam().getTeacher().getAccount().getId(), account.getId())) {
+                userError("That teacher is not allowed to write there");
+            }
+            return messageService.createExamPeriodMessage(messageBean, examPeriod, account);
+        }
+        return userError("Admin cannot write there");
+    }
+
+    public void updateExamStates() {
+        List<ExamPeriod> readyPeriods = examPeriodRepository.findAllByStateIn(Collections.singleton(ExamPeriodState.READY));
+
+        for (ExamPeriod readyPeriod : readyPeriods) {
+            if (readyPeriod.getStart().isAfter(LocalDateTime.now(UTC))) {
+                readyPeriod.setState(ExamPeriodState.PROGRESS);
+                examPeriodRepository.save(readyPeriod);
+            }
+        }
+
+        List<ExamPeriod> inProgressPeriods = examPeriodRepository.findAllByStateIn(Collections.singleton(ExamPeriodState.PROGRESS));
+
+        for (ExamPeriod inProgressPeriod : inProgressPeriods) {
+            if (inProgressPeriod.getEnd().isAfter(LocalDateTime.now(UTC))) {
+                inProgressPeriod.setState(ExamPeriodState.FINISHED);
+                examPeriodRepository.save(inProgressPeriod);
+            }
+        }
     }
 
     @Override

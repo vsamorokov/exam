@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Entity
@@ -20,10 +21,10 @@ public class Answer extends PersistableEntity {
     @Column(name = "rating")
     private Integer rating;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id")
     private Ticket ticket;
 
-    // TODO: add list of messages
-
+    @OneToMany(mappedBy = "answer")
+    private List<Message> messages;
 }

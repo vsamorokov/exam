@@ -1,13 +1,17 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.GroupBean;
 import ru.nstu.exam.entity.Discipline;
-import ru.nstu.exam.entity.ExamRule;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.repository.GroupRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static ru.nstu.exam.exception.ExamException.userError;
 
 @Service
 public class GroupService extends BasePersistentService<Group, GroupBean, GroupRepository> {
@@ -20,7 +24,27 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
 
 
     public GroupBean createGroup(GroupBean groupBean) {
-        return map(save(map(groupBean)));
+        List<DisciplineBean> disciplineBeans = groupBean.getDisciplines();
+        List<Discipline> disciplines = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(disciplineBeans)) {
+            for (DisciplineBean disciplineBean : disciplineBeans) {
+                if (disciplineBean.getId() == null) {
+                    userError("Discipline must have an id");
+                }
+                Discipline discipline = disciplineService.findById(disciplineBean.getId());
+                if (discipline == null) {
+                    userError("No discipline found");
+                }
+                disciplines.add(discipline);
+            }
+        }
+
+        Group group = map(groupBean);
+
+        if (!CollectionUtils.isEmpty(disciplines)) {
+            group.setDisciplines(disciplines);
+        }
+        return map(save(group));
     }
 
     public List<GroupBean> findByDiscipline(Long disciplineId) {

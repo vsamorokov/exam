@@ -13,5 +13,8 @@
     <changeSet id="3" author="vsamorokov">
         <sqlFile path="add-name-to-exam-rule.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="4" author="vsamorokov">
+        <sqlFile path="add-messages.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
