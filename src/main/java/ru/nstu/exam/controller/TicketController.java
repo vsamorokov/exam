@@ -1,6 +1,9 @@
 package ru.nstu.exam.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.TicketBean;
@@ -24,9 +27,10 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}/answer")
-    public List<AnswerBean> getAnswers(@PathVariable Long ticketId) {
-        return ticketService.getAnswers(ticketId);
+    public List<AnswerBean> getAnswers(
+            @PathVariable Long ticketId,
+            @PageableDefault(sort = "task.taskType", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ticketService.getAnswers(ticketId, pageable);
     }
-
-
 }

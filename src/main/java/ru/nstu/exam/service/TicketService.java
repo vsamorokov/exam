@@ -1,6 +1,7 @@
 package ru.nstu.exam.service;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.EntityBean;
@@ -113,12 +114,16 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return mapToBeans(tickets);
     }
 
-    public List<AnswerBean> getAnswers(Long ticketId) {
+    public List<AnswerBean> getAnswers(Long ticketId, Pageable pageable) {
         Ticket ticket = findById(ticketId);
         if (ticket == null) {
             userError("No ticket found");
         }
-        return answerService.findByTicket(ticket);
+        ExamPeriodState state = ticket.getExamPeriod().getState();
+        if (!state.isAfter(ExamPeriodState.READY)) {
+            userError("Exam did not start yet");
+        }
+        return answerService.findByTicket(ticket, pageable);
     }
 
     @Override

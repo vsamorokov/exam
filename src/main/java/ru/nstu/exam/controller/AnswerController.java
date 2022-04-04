@@ -5,8 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.MessageBean;
 import ru.nstu.exam.entity.Account;
+import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.AnswerService;
 
@@ -31,5 +33,14 @@ public class AnswerController {
                                   @UserAccount Account account
     ) {
         return answerService.newMessage(answerId, messageBean, account);
+    }
+
+    @IsTeacher
+    @PutMapping("/{answerId}")
+    public void rate(@PathVariable Long answerId,
+                     @RequestBody AnswerBean answerBean,
+                     @UserAccount Account account
+    ) {
+        answerService.rate(answerId, answerBean, account);
     }
 }

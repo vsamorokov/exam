@@ -21,11 +21,13 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
 
     private final TaskService taskService;
     private final MessageService messageService;
+    private final TeacherService teacherService;
 
-    public AnswerService(AnswerRepository repository, TaskService taskService, MessageService messageService) {
+    public AnswerService(AnswerRepository repository, TaskService taskService, MessageService messageService, TeacherService teacherService) {
         super(repository);
         this.taskService = taskService;
         this.messageService = messageService;
+        this.teacherService = teacherService;
     }
 
     public void generateAnswers(Ticket ticket, ExamRule examRule, List<Task> questions, List<Task> exercises) {
@@ -57,8 +59,8 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         save(answer);
     }
 
-    public List<AnswerBean> findByTicket(Ticket ticket) {
-        return getRepository().findAllByTicket(ticket).stream().map(this::map).collect(Collectors.toList());
+    public List<AnswerBean> findByTicket(Ticket ticket, Pageable pageable) {
+        return getRepository().findAllByTicket(ticket, pageable).stream().map(this::map).collect(Collectors.toList());
     }
 
     public Page<MessageBean> findAllMessages(Long answerId, Account account, Pageable pageable) {
@@ -103,9 +105,30 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         return userError("Admin cannot write there");
     }
 
+    public void rate(Long answerId, AnswerBean answerBean, Account account) {
+        Answer answer = findById(answerId);
+        if (answer == null) {
+            userError("No answer found");
+        }
+        Teacher teacher = teacherService.findByAccount(account);
+        if (!Objects.equals(answer.getTicket().getExamPeriod().getExam().getTeacher().getId(), teacher.getId())) {
+            userError("That teacher is not allowed to rate");
+        }
+        Integer rating = answerBean.getRating();
+        if (rating == null) {
+            userError("Rating must not be null");
+        }
+        if (rating > answer.getTask().getCost()) {
+            userError("Rating must not be bigger than cost of the task");
+        }
+        answer.setRating(rating);
+        save(answer);
+    }
+
     @Override
     protected AnswerBean map(Answer entity) {
         AnswerBean answerBean = new AnswerBean();
+        answerBean.setId(entity.getId());
         answerBean.setRating(entity.getRating());
         answerBean.setTask(taskService.map(entity.getTask()));
         return answerBean;

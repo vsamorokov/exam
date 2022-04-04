@@ -18,4 +18,9 @@ public enum ExamPeriodState {
     public boolean isAllowed(ExamPeriod examPeriod) {
         return examPeriod.getState().order + 1 == this.order;
     }
+
+    public boolean isAfter(ExamPeriodState state) {
+        return this.order > state.order;
+    }
+
 }
