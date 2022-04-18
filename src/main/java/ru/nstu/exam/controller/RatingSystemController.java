@@ -1,6 +1,9 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.CreateRatingSystemBean;
@@ -15,11 +18,34 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RatingSystemController {
 
+    private final static String EXAMPLE = "{\n" +
+            "  \"id\": 0,\n" +
+            "  \"name\": \"string\",\n" +
+            "  \"ratingMapping\": {\n" +
+            "    \"QUESTION\": {\n" +
+            "      \"-2\": \"REJECTED\",\n" +
+            "      \"0\": \"APPROVED\",\n" +
+            "      \"1\": \"APPROVED\",\n" +
+            "      \"2\": \"APPROVED\",\n" +
+            "    },\n" +
+            "    \"EXERCISE\": {\n" +
+            "      \"0\": \"REJECTED\",\n" +
+            "      \"1\": \"APPROVED\",\n" +
+            "      \"2\": \"APPROVED\"\n" +
+            "      \"3\": \"APPROVED\"\n" +
+            "      \"4\": \"APPROVED\"\n" +
+            "      \"5\": \"APPROVED\"\n" +
+            "      \"6\": \"APPROVED\"\n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
+
     private final RatingSystemService ratingSystemService;
 
     @IsTeacher
     @GetMapping
-    @Operation(summary = "Get all rating mappings")
+    @Operation(summary = "Get all rating mappings",
+            responses = @ApiResponse(content = @Content(examples = @ExampleObject(value = EXAMPLE))))
     public List<RatingSystemBean> getAll() {
         return ratingSystemService.findAll();
     }

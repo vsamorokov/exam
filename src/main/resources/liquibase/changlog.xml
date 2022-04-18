@@ -31,5 +31,8 @@
     <changeSet id="9" author="vsamorokov">
         <sqlFile path="remove-cost-from-task.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="10" author="vsamorokov">
+        <sqlFile path="update-rating-system.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
