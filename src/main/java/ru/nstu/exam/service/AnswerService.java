@@ -3,10 +3,12 @@ package ru.nstu.exam.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.AnswerBean;
-import ru.nstu.exam.bean.MessageBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.entity.*;
+import ru.nstu.exam.entity.utils.RatingMapping;
+import ru.nstu.exam.enums.AnswerStatus;
 import ru.nstu.exam.enums.ExamPeriodState;
+import ru.nstu.exam.enums.TaskType;
 import ru.nstu.exam.repository.AnswerRepository;
 import ru.nstu.exam.security.UserRole;
 
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
 import static ru.nstu.exam.exception.ExamException.userError;
 
 @Service
-public class AnswerService extends BasePersistentService<Answer, AnswerBean, AnswerRepository> {
+public class AnswerService extends BasePersistentService<Answer, StudentAnswerBean, AnswerRepository> {
     private final Random random = new Random();
 
     private final TaskService taskService;
@@ -34,11 +36,12 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         try {
             Set<Long> usedQuestions = new HashSet<>(examRule.getQuestionCount());
             Set<Long> usedExercises = new HashSet<>(examRule.getExerciseCount());
+            int number = 1;
             for (int i = 0; i < examRule.getQuestionCount(); i++) {
-                createAnswer(ticket, questions, usedQuestions);
+                generateAnswer(ticket, questions, usedQuestions, number++);
             }
             for (int i = 0; i < examRule.getExerciseCount(); i++) {
-                createAnswer(ticket, exercises, usedExercises);
+                generateAnswer(ticket, exercises, usedExercises, number++);
             }
         } catch (Exception e) {
             List<Answer> answers = getRepository().findAllByTicket(ticket);
@@ -47,7 +50,7 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         }
     }
 
-    private void createAnswer(Ticket ticket, List<Task> tasks, Set<Long> usedTasks) {
+    private void generateAnswer(Ticket ticket, List<Task> tasks, Set<Long> usedTasks, int number) {
         Answer answer = new Answer();
         answer.setTicket(ticket);
         int index = random.nextInt(tasks.size());
@@ -55,11 +58,13 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
             index = random.nextInt(tasks.size());
         }
         answer.setTask(tasks.get(index));
+        answer.setNumber(number);
+        answer.setStatus(null);
         usedTasks.add(tasks.get(index).getId());
         save(answer);
     }
 
-    public List<AnswerBean> findByTicket(Ticket ticket, Pageable pageable) {
+    public List<StudentAnswerBean> findByTicket(Ticket ticket, Pageable pageable) {
         return getRepository().findAllByTicket(ticket, pageable).stream().map(this::map).collect(Collectors.toList());
     }
 
@@ -82,7 +87,7 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         return messageService.findAllByAnswer(answer, pageable);
     }
 
-    public MessageBean newMessage(Long answerId, MessageBean messageBean, Account account) {
+    public MessageBean newMessage(Long answerId, NewMessageBean messageBean, Account account) {
         Answer answer = findById(answerId);
         if (answer == null) {
             userError("No answer found");
@@ -105,7 +110,7 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         return userError("Admin cannot write there");
     }
 
-    public void rate(Long answerId, AnswerBean answerBean, Account account) {
+    public void rate(Long answerId, UpdateAnswerBean answerBean, Account account) {
         Answer answer = findById(answerId);
         if (answer == null) {
             userError("No answer found");
@@ -118,24 +123,54 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
         if (rating == null) {
             userError("Rating must not be null");
         }
-        if (rating > answer.getTask().getCost()) {
-            userError("Rating must not be bigger than cost of the task");
+        RatingSystem ratingSystem = answer.getTicket().getExamPeriod().getExam().getExamRule().getRatingSystem();
+        Integer maxQuestionRating = ratingSystem.getRatingMappings().stream()
+                .filter(rm -> rm.getTaskType() == TaskType.QUESTION)
+                .max(Comparator.comparingInt(RatingMapping::getRating))
+                .map(RatingMapping::getRating)
+                .orElse(0);
+        Integer maxExerciseRating = ratingSystem.getRatingMappings().stream()
+                .filter(rm -> rm.getTaskType() == TaskType.EXERCISE)
+                .max(Comparator.comparingInt(RatingMapping::getRating))
+                .map(RatingMapping::getRating)
+                .orElse(0);
+        Task task = answer.getTask();
+        if (TaskType.QUESTION.equals(task.getTaskType()) && rating > maxQuestionRating
+                || TaskType.EXERCISE.equals(task.getTaskType()) && rating > maxExerciseRating
+        ) {
+            userError("Rating must bot be bigger that max of rating system");
         }
         answer.setRating(rating);
+        AnswerStatus status = ratingSystem.getRatingMap().get(task.getTaskType()).get(rating);
+        answer.setStatus(status == null ? AnswerStatus.CHECKING : status);
+
         save(answer);
     }
 
     @Override
-    protected AnswerBean map(Answer entity) {
-        AnswerBean answerBean = new AnswerBean();
-        answerBean.setId(entity.getId());
-        answerBean.setRating(entity.getRating());
-        answerBean.setTask(taskService.map(entity.getTask()));
-        return answerBean;
+    protected StudentAnswerBean map(Answer entity) {
+        Task task = entity.getTask();
+
+        StudentAnswerBean bean = new StudentAnswerBean();
+        bean.setId(entity.getId());
+        bean.setRating(entity.getRating());
+        bean.setTicketId(entity.getTicket().getId());
+
+        StudentTaskBean taskBean = new StudentTaskBean();
+        taskBean.setId(task.getId());
+        taskBean.setTaskType(task.getTaskType());
+        taskBean.setArtefactId(task.getArtefact().getId());
+        taskBean.setText(task.getText());
+        taskBean.setThemeName(task.getTheme().getName());
+        bean.setTask(taskBean);
+
+        bean.setNumber(entity.getNumber());
+        bean.setStatus(entity.getStatus());
+        return bean;
     }
 
     @Override
-    protected Answer map(AnswerBean bean) {
+    protected Answer map(StudentAnswerBean bean) {
         return null;
     }
 

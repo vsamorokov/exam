@@ -14,9 +14,6 @@ import javax.persistence.*;
 @Where(clause = "deleted = false")
 public class Task extends PersistableEntity {
 
-    @Column(name = "cost", nullable = false)
-    private Integer cost;
-
     @Column(name = "text", length = 2048)
     private String text;
 

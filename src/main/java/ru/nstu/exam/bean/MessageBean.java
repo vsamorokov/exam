@@ -8,9 +8,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MessageBean extends EntityBean {
-
     private String text;
     private long sendTime;
-    //    private Artefact artefact
-    private AccountBean account;
+    private Long artefactId;
+    private Long accountId;
 }

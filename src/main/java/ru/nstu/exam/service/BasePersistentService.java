@@ -12,7 +12,6 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @RequiredArgsConstructor
 public abstract class BasePersistentService<T extends PersistableEntity, B extends EntityBean, R extends PersistableEntityRepository<T>> {
 

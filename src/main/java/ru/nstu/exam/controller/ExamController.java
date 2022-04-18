@@ -1,14 +1,12 @@
 package ru.nstu.exam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.ExamBean;
-import ru.nstu.exam.bean.ExamPeriodBean;
-import ru.nstu.exam.bean.MessageBean;
-import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
@@ -23,57 +21,79 @@ public class ExamController {
     private final ExamService examService;
 
     @IsTeacher
-    @GetMapping("/exam")
+    @GetMapping("/exams")
+    @Operation(summary = "Get all teacher's exams")
     public List<ExamBean> getAll(@UserAccount Account account) {
         return examService.findAll(account);
     }
 
     @IsTeacher
-    @PostMapping("/exam")
-    public ExamBean createExam(@RequestBody ExamBean examBean,
-                               @UserAccount Account account) {
-        return examService.createExam(examBean, account);
+    @PostMapping("/exams")
+    @Operation(summary = "Create an exam")
+    public ExamBean createExam(
+            @RequestBody CreateExamBean createExamBean,
+            @UserAccount Account account
+    ) {
+        return examService.createExam(createExamBean, account);
     }
 
     @IsTeacher
-    @PutMapping("/exam/{examId}")
-    public ExamBean updateExam(@PathVariable Long examId,
-                               @RequestBody ExamBean examBean,
-                               @UserAccount Account account) {
+    @PutMapping("/exams/{examId}")
+    @Operation(summary = "Update an exam")
+    public ExamBean updateExam(
+            @PathVariable Long examId,
+            @RequestBody CreateExamBean examBean,
+            @UserAccount Account account
+    ) {
         return examService.updateExam(examId, examBean, account);
     }
 
     @IsTeacher
-    @GetMapping("/exam/{examId}/period")
+    @DeleteMapping("/exams/{examId}")
+    @Operation(summary = "Delete an exam")
+    public void deleteExam(
+            @PathVariable Long examId,
+            @UserAccount Account account
+    ) {
+        examService.deleteExam(examId, account);
+    }
+
+    @IsTeacher
+    @GetMapping("/exams/{examId}/periods")
+    @Operation(summary = "Get exam periods by exam")
     public List<ExamPeriodBean> getPeriods(@PathVariable Long examId) {
         return examService.findPeriods(examId);
     }
 
-    @IsTeacher
-    @PutMapping("/exam/{examId}/period/{periodId}")
-    public void updatePeriod(@PathVariable Long examId, @PathVariable Long periodId, @RequestBody ExamPeriodBean examPeriodBean) {
-        examService.updatePeriod(examId, periodId, examPeriodBean);
+    @GetMapping("/periods/{periodId}")
+    @Operation(summary = "Get exam period")
+    public ExamPeriodBean getPeriod(@PathVariable Long periodId, @UserAccount Account account) {
+        return examService.getPeriod(periodId, account);
     }
 
     @IsTeacher
-    @PutMapping("/exam/{examId}/period/{periodId}/state")
-    public void updateState(@PathVariable Long examId, @PathVariable Long periodId, @RequestBody ExamPeriodBean examPeriodBean) {
-        examService.updateState(examId, periodId, examPeriodBean);
+    @PutMapping("/periods/{periodId}")
+    @Operation(summary = "Update exam period (start time or state NOT together)")
+    public ExamPeriodBean updatePeriod(@PathVariable Long periodId, @RequestBody UpdateExamPeriodBean examPeriodBean) {
+        return examService.updatePeriod(periodId, examPeriodBean);
     }
 
     @IsTeacher
-    @GetMapping("/exam/{examId}/un-passed")
+    @GetMapping("/exams/{examId}/un-passed")
+    @Operation(summary = "Get tickets of people who didn't pass an exam")
     public List<TicketBean> getUnPassed(@PathVariable Long examId) {
         return examService.findUnPassed(examId);
     }
 
     @IsTeacher
-    @GetMapping("/period/{periodId}/ticket")
+    @GetMapping("/periods/{periodId}/ticket")
+    @Operation(summary = "Get tickets by a period")
     public List<TicketBean> getTickets(@PathVariable Long periodId) {
         return examService.findTickets(periodId);
     }
 
-    @GetMapping("/period/{periodId}/message")
+    @GetMapping("/periods/{periodId}/messages")
+    @Operation(summary = "Get messages by an exam period")
     public Page<MessageBean> getMessages(@PathVariable Long periodId,
                                          @UserAccount Account account,
                                          @PageableDefault Pageable pageable
@@ -81,9 +101,10 @@ public class ExamController {
         return examService.findAllMessages(periodId, account, pageable);
     }
 
-    @PostMapping("/period/{periodId}/message")
+    @PostMapping("/periods/{periodId}/messages")
+    @Operation(summary = "Send a message to an exam period")
     public MessageBean newMessage(@PathVariable Long periodId,
-                                  @RequestBody MessageBean messageBean,
+                                  @RequestBody NewMessageBean messageBean,
                                   @UserAccount Account account
     ) {
         return examService.newMessage(periodId, messageBean, account);

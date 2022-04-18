@@ -14,13 +14,16 @@ import javax.persistence.*;
 @Where(clause = "deleted = false")
 public class Artefact extends AbstractPersistable<Long> {
 
-    @Column(name = "artefact_id", nullable = false)
-    private String artefactId;
+    @Column(name = "local_name", nullable = false)
+    private String localName;
 
-    @Column(name = "filesize", nullable = false)
-    private Integer filesize;
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "artefact_type", nullable = false)
     private ArtefactType artefactType;
+
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
 }

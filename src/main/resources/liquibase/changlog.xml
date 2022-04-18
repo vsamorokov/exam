@@ -16,5 +16,20 @@
     <changeSet id="4" author="vsamorokov">
         <sqlFile path="add-messages.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="5" author="vsamorokov">
+        <sqlFile path="artefact-change.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="6" author="vsamorokov">
+        <sqlFile path="artefact-change2.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="7" author="vsamorokov">
+        <sqlFile path="add-rating-system.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="8" author="vsamorokov">
+        <sqlFile path="extend-answer-table.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+    <changeSet id="9" author="vsamorokov">
+        <sqlFile path="remove-cost-from-task.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>

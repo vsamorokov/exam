@@ -2,7 +2,7 @@ package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.DisciplineBean;
+import ru.nstu.exam.bean.CreateGroupBean;
 import ru.nstu.exam.bean.GroupBean;
 import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.Group;
@@ -22,30 +22,44 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
         this.disciplineService = disciplineService;
     }
 
-
-    public GroupBean createGroup(GroupBean groupBean) {
-        List<DisciplineBean> disciplineBeans = groupBean.getDisciplines();
-        List<Discipline> disciplines = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(disciplineBeans)) {
-            for (DisciplineBean disciplineBean : disciplineBeans) {
-                if (disciplineBean.getId() == null) {
-                    userError("Discipline must have an id");
-                }
-                Discipline discipline = disciplineService.findById(disciplineBean.getId());
-                if (discipline == null) {
-                    userError("No discipline found");
-                }
-                disciplines.add(discipline);
-            }
+    public GroupBean findOne(Long groupId) {
+        Group group = findById(groupId);
+        if (group == null) {
+            userError("Group not found");
         }
+        return map(group);
+    }
 
-        Group group = map(groupBean);
+    public GroupBean createGroup(CreateGroupBean groupBean) {
+        List<Discipline> disciplines = getDisciplines(groupBean);
+
+        Group group = new Group();
+        group.setName(groupBean.getName());
 
         if (!CollectionUtils.isEmpty(disciplines)) {
             group.setDisciplines(disciplines);
         }
         return map(save(group));
     }
+
+
+    public GroupBean editGroup(Long id, CreateGroupBean groupBean) {
+        Group group = findById(id);
+        if (group == null) {
+            userError("Group not found");
+        }
+        List<Discipline> disciplines = getDisciplines(groupBean);
+
+        if (groupBean.getName() != null) {
+            group.setName(groupBean.getName());
+        }
+
+        if (!CollectionUtils.isEmpty(disciplines)) {
+            group.setDisciplines(disciplines);
+        }
+        return map(save(group));
+    }
+
 
     public List<GroupBean> findByDiscipline(Long disciplineId) {
         if (disciplineId == null) {
@@ -54,6 +68,21 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
         Discipline discipline = disciplineService.getById(disciplineId);
         List<Group> groups = getRepository().findAllByDisciplinesContaining(discipline);
         return mapToBeans(groups);
+    }
+
+    private List<Discipline> getDisciplines(CreateGroupBean groupBean) {
+        List<Long> disciplineIds = groupBean.getDisciplineIds();
+        List<Discipline> disciplines = new ArrayList<>(disciplineIds.size());
+        if (!CollectionUtils.isEmpty(disciplineIds)) {
+            for (Long id : disciplineIds) {
+                Discipline discipline = disciplineService.findById(id);
+                if (discipline == null) {
+                    userError("No discipline found");
+                }
+                disciplines.add(discipline);
+            }
+        }
+        return disciplines;
     }
 
     @Override

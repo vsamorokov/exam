@@ -15,7 +15,7 @@ public class TicketBean extends EntityBean {
 
     private Boolean allowed;
 
-    private ExamPeriodBean examPeriod;
+    private Long examPeriodId;
 
-    private StudentBean student;
+    private Long studentId;
 }

@@ -1,8 +1,10 @@
 package ru.nstu.exam.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.CreateTeacherBean;
 import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
 import ru.nstu.exam.entity.Account;
@@ -22,24 +24,28 @@ public class TeacherController {
 
     @IsAdmin
     @PostMapping("/bulk")
-    public List<TeacherBean> addTeachers(@RequestBody List<TeacherBean> teachers) {
+    @Operation(summary = "Create many teachers")
+    public List<TeacherBean> addTeachers(@RequestBody List<CreateTeacherBean> teachers) {
         return teacherService.addTeachers(teachers);
     }
 
     @IsAdmin
     @PostMapping
-    public TeacherBean createTeacher(@RequestBody TeacherBean teacher) {
+    @Operation(summary = "Create one teacher")
+    public TeacherBean createTeacher(@RequestBody CreateTeacherBean teacher) {
         return teacherService.createTeacher(teacher);
     }
 
     @IsTeacher
     @GetMapping("/discipline")
+    @Operation(summary = "Get teacher's disciplines")
     public List<DisciplineBean> getDisciplines(@UserAccount Account account) {
         return teacherService.findDisciplines(account);
     }
 
     @IsTeacher
     @GetMapping("/me")
+    @Operation(summary = "Get info about sender teacher")
     public TeacherBean getSelf(@UserAccount Account account) {
         return teacherService.getSelf(account);
     }

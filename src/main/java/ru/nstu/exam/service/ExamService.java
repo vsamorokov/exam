@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.serverError;
@@ -53,7 +54,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return mapToBeans(getRepository().findAllByTeacher(teacher));
     }
 
-    public ExamBean createExam(ExamBean examBean, Account account) {
+    public ExamBean createExam(CreateExamBean examBean, Account account) {
         if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
             serverError("Not teacher cannot create exam");
         }
@@ -61,40 +62,23 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         if (teacher == null) {
             serverError("No teacher found");
         }
-        DisciplineBean disciplineBean = examBean.getDiscipline();
-        if (disciplineBean == null) {
-            userError("Exam must have discpline");
-        }
-        if (disciplineBean.getId() == null) {
-            userError("Discipline must have an id");
-        }
-        Discipline discipline = disciplineService.findById(disciplineBean.getId());
+        Discipline discipline = disciplineService.findById(examBean.getDisciplineId());
         if (discipline == null) {
             userError("No discipline with provided id");
         }
-        ExamRuleBean examRuleBean = examBean.getExamRule();
-        if (examRuleBean == null) {
-            userError("Exam must have exam rule");
-        }
-        if (examRuleBean.getId() == null) {
-            userError("Exam rule must have an id");
-        }
-        ExamRule examRule = examRuleService.findById(examRuleBean.getId());
+        ExamRule examRule = examRuleService.findById(examBean.getExamRuleId());
         if (examRule == null) {
             userError("No exam rule with provided id");
         }
-        List<GroupBean> groupBeans = examBean.getGroups();
-        if (CollectionUtils.isEmpty(groupBeans)) {
+        List<Long> groupIds = examBean.getGroupIds();
+        if (CollectionUtils.isEmpty(groupIds)) {
             userError("Exam must have at least 1 group");
         }
-        List<Group> groups = new ArrayList<>(groupBeans.size());
-        for (GroupBean groupBean : groupBeans) {
-            if (groupBean.getId() == null) {
-                userError("Group must have an id");
-            }
-            Group group = groupService.findById(groupBean.getId());
+        List<Group> groups = new ArrayList<>(groupIds.size());
+        for (Long groupId : groupIds) {
+            Group group = groupService.findById(groupId);
             if (group == null) {
-                userError("No group with id " + groupBean.getId());
+                userError("No group with id " + groupId);
             }
             groups.add(group);
         }
@@ -102,7 +86,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             userError("Empty start date");
         }
 
-        Exam exam = map(examBean);
+        Exam exam = new Exam();
         exam.setDiscipline(discipline);
         exam.setExamRule(examRule);
         exam.setTeacher(teacher);
@@ -111,7 +95,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         Exam saved = save(exam);
 
         try {
-            createPeriod(saved, examBean.getStartTime(), examRule);
+            createPeriodInternal(saved, examBean.getStartTime(), examRule);
         } catch (ExamException e) {
             delete(saved);
             throw e;
@@ -120,7 +104,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(saved);
     }
 
-    public ExamBean updateExam(Long examId, ExamBean examBean, Account account) {
+    public ExamBean updateExam(Long examId, CreateExamBean examBean, Account account) {
         Exam exam = findById(examId);
         if (exam == null) {
             userError("No exam found");
@@ -136,56 +120,56 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             userError("Wrong state");
         }
 
-        DisciplineBean disciplineBean = examBean.getDiscipline();
-        if (disciplineBean != null) {
-            if (disciplineBean.getId() == null) {
-                userError("Discipline must have an id");
-            }
-            Discipline discipline = disciplineService.findById(disciplineBean.getId());
+        Long disciplineId = examBean.getDisciplineId();
+        if (disciplineId != null) {
+            Discipline discipline = disciplineService.findById(disciplineId);
             if (discipline == null) {
                 userError("No discipline with provided id");
             }
             exam.setDiscipline(discipline);
         }
 
-        ExamRuleBean examRuleBean = examBean.getExamRule();
-        if (examRuleBean != null) {
-            if (examRuleBean.getId() == null) {
-                userError("Exam rule must have an id");
-            }
-            ExamRule examRule = examRuleService.findById(examRuleBean.getId());
+        Long examRuleId = examBean.getExamRuleId();
+        if (examRuleId != null) {
+            ExamRule examRule = examRuleService.findById(examRuleId);
             if (examRule == null) {
                 userError("No exam rule with provided id");
             }
             exam.setExamRule(examRule);
         }
 
-        List<GroupBean> groupBeans = examBean.getGroups();
-        if (!CollectionUtils.isEmpty(groupBeans)) {
-            List<Group> groups = new ArrayList<>(groupBeans.size());
-            for (GroupBean groupBean : groupBeans) {
-                if (groupBean.getId() == null) {
-                    userError("Group must have an id");
-                }
-                Group group = groupService.findById(groupBean.getId());
+        List<Long> groupIds = examBean.getGroupIds();
+        if (!CollectionUtils.isEmpty(groupIds)) {
+            List<Group> groups = new ArrayList<>(groupIds.size());
+            for (Long groupId : groupIds) {
+                Group group = groupService.findById(groupId);
                 if (group == null) {
-                    userError("No group with id " + groupBean.getId());
+                    userError("No group with id " + groupId);
                 }
                 groups.add(group);
             }
             exam.setGroups(groups);
         }
 
-        Exam saved = save(exam);
-
         if (examBean.getStartTime() != null) {
-            updatePeriod(saved, examBean.getStartTime(), saved.getExamRule());
+            updatePeriodInternal(exam, examBean.getStartTime(), exam.getExamRule());
         }
 
-        return map(saved);
+        return map(save(exam));
     }
 
-    private void createPeriod(Exam exam, Long start, ExamRule examRule) {
+    public void deleteExam(Long examId, Account account) {
+        Exam exam = findById(examId);
+        if (exam == null) {
+            userError("Exam not found");
+        }
+        if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
+            userError("That teacher cannot do this");
+        }
+        delete(exam);
+    }
+
+    private void createPeriodInternal(Exam exam, Long start, ExamRule examRule) {
         ExamPeriod examPeriod = new ExamPeriod();
         examPeriod.setStart(toLocalDateTime(start));
         examPeriod.setEnd(toLocalDateTime(start).plusMinutes(examRule.getDuration()));
@@ -201,7 +185,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         }
     }
 
-    private void updatePeriod(Exam exam, Long start, ExamRule examRule) {
+    private void updatePeriodInternal(Exam exam, Long start, ExamRule examRule) {
         List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
         if (periods.size() != 1) {
             userError("Cannot modify exam that already had been closed");
@@ -217,41 +201,28 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         examPeriodRepository.save(period);
     }
 
-    public void updatePeriod(Long examId, Long periodId, ExamPeriodBean bean) {
-        Exam exam = this.findById(examId);
-        if (exam == null) {
-            userError("No exam found");
-        }
+    public ExamPeriodBean updatePeriod(Long periodId, UpdateExamPeriodBean bean) {
         ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        if (!Objects.equals(period.getExam().getId(), exam.getId())) {
-            userError("Exam period is from another exam");
+        if (bean.getStart() != null && bean.getState() == null) {
+            if (!ExamPeriodState.REDACTION.equals(period.getState())) {
+                userError("Wrong state");
+            }
+            Exam exam = period.getExam();
+            LocalDateTime start = toLocalDateTime(bean.getStart());
+            period.setStart(start);
+            period.setEnd(start.plusMinutes(exam.getExamRule().getDuration()));
+            ExamPeriod saved = examPeriodRepository.save(period);
+            return map(saved);
         }
-        if (!ExamPeriodState.REDACTION.equals(period.getState())) {
-            userError("Wrong state");
+        if (bean.getStart() == null && bean.getState() != null) {
+            if (!bean.getState().isAllowed(period)) {
+                userError("Wrong state");
+            }
+            period.setState(bean.getState());
+            ExamPeriod saved = examPeriodRepository.save(period);
+            return map(saved);
         }
-        if (bean.getStart() == null) {
-            userError("Start date must be not null");
-        }
-        LocalDateTime start = toLocalDateTime(bean.getStart());
-        period.setStart(start);
-        period.setEnd(start.plusMinutes(exam.getExamRule().getDuration()));
-        examPeriodRepository.save(period);
-    }
-
-    public void updateState(Long examId, Long periodId, ExamPeriodBean bean) {
-        Exam exam = this.findById(examId);
-        if (exam == null) {
-            userError("No exam found");
-        }
-        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        if (!Objects.equals(period.getExam().getId(), exam.getId())) {
-            userError("Exam period is from another exam");
-        }
-        if (!bean.getState().isAllowed(period)) {
-            userError("Wrong state");
-        }
-        period.setState(bean.getState());
-        examPeriodRepository.save(period);
+        return userError("Wrong parameters");
     }
 
     public List<TicketBean> findUnPassed(Long examId) {
@@ -262,6 +233,26 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return ticketService.getUnPassed(exam);
     }
 
+
+    public ExamPeriodBean getPeriod(Long periodId, Account account) {
+        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("Period not found"));
+
+        if (account.getRoles().contains(UserRole.ROLE_ADMIN)) {
+            if (!Objects.equals(period.getExam().getTeacher().getAccount().getId(), account.getId())) {
+                userError("Teacher not allowed to this exam");
+            }
+            return map(period);
+        } else if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
+            if (!period.getState().isAfter(ExamPeriodState.ALLOWANCE) ||
+                    period.getTickets().stream()
+                            .noneMatch(t -> t.getAllowed() && Objects.equals(t.getStudent().getAccount().getId(), account.getId()))) {
+                userError("Student not allowed to this exam");
+            }
+            return map(period);
+        }
+        return userError("Not allowed to this exam");
+    }
+
     public List<ExamPeriodBean> findPeriods(Long examId) {
         Exam exam = findById(examId);
         if (exam == null) {
@@ -270,11 +261,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
         List<ExamPeriodBean> beans = new ArrayList<>(periods.size());
         for (ExamPeriod examPeriod : periods) {
-            ExamPeriodBean examPeriodBean = new ExamPeriodBean();
-            examPeriodBean.setId(examPeriod.getId());
-            examPeriodBean.setStart(toMillis(examPeriod.getStart()));
-            examPeriodBean.setEnd(toMillis(examPeriod.getEnd()));
-            examPeriodBean.setState(examPeriod.getState());
+            ExamPeriodBean examPeriodBean = map(examPeriod);
             beans.add(examPeriodBean);
         }
         return beans;
@@ -305,7 +292,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return messageService.findAllByExamPeriod(examPeriod, pageable);
     }
 
-    public MessageBean newMessage(Long periodId, MessageBean messageBean, Account account) {
+    public MessageBean newMessage(Long periodId, NewMessageBean messageBean, Account account) {
         ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
         if (!ExamPeriodState.PROGRESS.equals(examPeriod.getState())) {
             userError("Wrong state");
@@ -352,10 +339,9 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     protected ExamBean map(Exam entity) {
         ExamBean examBean = new ExamBean();
         examBean.setId(entity.getId());
-        examBean.setDiscipline(disciplineService.map(entity.getDiscipline()));
-        examBean.setExamRule(examRuleService.map(entity.getExamRule()));
-        examBean.setTeacher(teacherService.map(entity.getTeacher()));
-        examBean.setGroups(groupService.mapToBeans(entity.getGroups()));
+        examBean.setDisciplineId(entity.getDiscipline().getId());
+        examBean.setExamRuleId(entity.getExamRule().getId());
+        examBean.setGroupIds(entity.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
         return examBean;
     }
 
@@ -363,4 +349,15 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     protected Exam map(ExamBean bean) {
         return new Exam();
     }
+
+    protected ExamPeriodBean map(ExamPeriod entity) {
+        ExamPeriodBean bean = new ExamPeriodBean();
+        bean.setId(entity.getId());
+        bean.setExamId(entity.getExam().getId());
+        bean.setStart(toMillis(entity.getStart()));
+        bean.setEnd(toMillis(entity.getEnd()));
+        bean.setState(entity.getState());
+        return bean;
+    }
+
 }

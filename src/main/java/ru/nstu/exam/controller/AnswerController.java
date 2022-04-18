@@ -1,12 +1,14 @@
 package ru.nstu.exam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.MessageBean;
+import ru.nstu.exam.bean.NewMessageBean;
+import ru.nstu.exam.bean.UpdateAnswerBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
@@ -18,8 +20,8 @@ import ru.nstu.exam.service.AnswerService;
 public class AnswerController {
     private final AnswerService answerService;
 
-
     @GetMapping("/{answerId}/message")
+    @Operation(summary = "Get messages by an answer")
     public Page<MessageBean> getMessages(@PathVariable Long answerId,
                                          @UserAccount Account account,
                                          @PageableDefault Pageable pageable
@@ -28,8 +30,9 @@ public class AnswerController {
     }
 
     @PostMapping("/{answerId}/message")
+    @Operation(summary = "Send message to an answer")
     public MessageBean newMessage(@PathVariable Long answerId,
-                                  @RequestBody MessageBean messageBean,
+                                  @RequestBody NewMessageBean messageBean,
                                   @UserAccount Account account
     ) {
         return answerService.newMessage(answerId, messageBean, account);
@@ -37,8 +40,9 @@ public class AnswerController {
 
     @IsTeacher
     @PutMapping("/{answerId}")
+    @Operation(summary = "Put a mark to an answer")
     public void rate(@PathVariable Long answerId,
-                     @RequestBody AnswerBean answerBean,
+                     @RequestBody UpdateAnswerBean answerBean,
                      @UserAccount Account account
     ) {
         answerService.rate(answerId, answerBean, account);

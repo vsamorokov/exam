@@ -2,7 +2,6 @@ package ru.nstu.exam.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.ThemeBean;
 import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.Theme;
@@ -20,15 +19,17 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         this.disciplineService = disciplineService;
     }
 
+    public ThemeBean findOne(Long themeId) {
+        Theme theme = findById(themeId);
+        if (theme == null) {
+            userError("Theme not found");
+        }
+        return map(theme);
+    }
+
     public ThemeBean createTheme(ThemeBean themeBean) {
-        DisciplineBean disciplineBean = themeBean.getDiscipline();
-        if (disciplineBean == null) {
-            userError("Theme must have discipline");
-        }
-        if (disciplineBean.getId() == null) {
-            userError("Discipline must have id");
-        }
-        Discipline discipline = disciplineService.findById(disciplineBean.getId());
+
+        Discipline discipline = disciplineService.findById(themeBean.getDisciplineId());
         if (discipline == null) {
             userError("Discipline with specified id cannot be found");
         }
@@ -47,7 +48,7 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         ThemeBean themeBean = new ThemeBean();
         themeBean.setId(entity.getId());
         themeBean.setName(entity.getName());
-        themeBean.setDiscipline(disciplineService.map(entity.getDiscipline()));
+        themeBean.setDisciplineId(entity.getDiscipline().getId());
         return themeBean;
     }
 

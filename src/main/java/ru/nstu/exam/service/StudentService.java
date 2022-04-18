@@ -3,7 +3,7 @@ package ru.nstu.exam.service;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.bean.StudentTicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Student;
@@ -23,7 +23,6 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
     private final AccountService accountService;
     private final TicketService ticketService;
 
-
     public StudentService(StudentRepository repository, GroupService groupService, AccountService accountService, TicketService ticketService) {
         super(repository);
         this.groupService = groupService;
@@ -41,10 +40,7 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
     }
 
     public StudentBean createStudent(StudentBean studentBean) {
-        if (studentBean.getGroup().getId() == null) {
-            userError("Group id must be specified");
-        }
-        Group group = groupService.getById(studentBean.getGroup().getId());
+        Group group = groupService.getById(studentBean.getGroupId());
         if (group == null) {
             userError("No group with specified id");
         }
@@ -67,9 +63,9 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         return map(getRepository().findByAccount(account));
     }
 
-    public List<TicketBean> getTickets(Account account){
+    public List<StudentTicketBean> getTickets(Account account) {
         Student student = getRepository().findByAccount(account);
-        if(student == null) {
+        if (student == null) {
             userError("No student found");
         }
         return ticketService.getStudentTickets(student);
@@ -80,7 +76,7 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         StudentBean studentBean = new StudentBean();
         studentBean.setId(entity.getId());
         studentBean.setAccount(accountService.map(entity.getAccount()));
-        studentBean.setGroup(groupService.map(entity.getGroup()));
+        studentBean.setGroupId(entity.getGroup().getId());
         return studentBean;
     }
 

@@ -3,6 +3,7 @@ package ru.nstu.exam.service;
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
+import ru.nstu.exam.bean.CreateTeacherBean;
 import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
 import ru.nstu.exam.entity.Account;
@@ -36,21 +37,18 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
         return getRepository().findByAccount(account);
     }
 
-    public List<TeacherBean> addTeachers(List<TeacherBean> teachers) {
+    public List<TeacherBean> addTeachers(List<CreateTeacherBean> teachers) {
         return teachers.stream().map(this::createTeacher).collect(Collectors.toList());
     }
 
-    public TeacherBean createTeacher(TeacherBean teacherBean) {
-        List<DisciplineBean> disciplineBeans = teacherBean.getDisciplineBeans();
-        if (CollectionUtils.isEmpty(disciplineBeans)) {
+    public TeacherBean createTeacher(CreateTeacherBean teacherBean) {
+        List<Long> disciplineIds = teacherBean.getDisciplineIds();
+        if (CollectionUtils.isEmpty(disciplineIds)) {
             userError("Teacher must have disciplines");
         }
-        List<Discipline> disciplines = new ArrayList<>(disciplineBeans.size());
-        for (DisciplineBean disciplineBean : disciplineBeans) {
-            if (disciplineBean.getId() == null) {
-                userError("Discipline must have an id");
-            }
-            Discipline discipline = disciplineService.findById(disciplineBean.getId());
+        List<Discipline> disciplines = new ArrayList<>(disciplineIds.size());
+        for (Long id : disciplineIds) {
+            Discipline discipline = disciplineService.findById(id);
             if (discipline == null) {
                 userError("No discipline found");
             }
@@ -69,7 +67,7 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
         AccountBean accountBean = accountService.createAccount(teacherBean.getAccount());
         Account account = accountService.getById(accountBean.getId());
 
-        Teacher teacher = map(teacherBean);
+        Teacher teacher = new Teacher();
         teacher.setAccount(account);
         teacher.setDisciplines(disciplines);
         return map(save(teacher));

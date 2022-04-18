@@ -14,9 +14,9 @@ public class TaskBean extends EntityBean {
 
     private String text;
 
-//    private Artefact artefact;
+    private Long artefactId;
 
     private TaskType taskType;
 
-    private ThemeBean theme;
+    private Long themeId;
 }

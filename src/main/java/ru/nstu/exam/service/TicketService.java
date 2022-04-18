@@ -1,17 +1,16 @@
 package ru.nstu.exam.service;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.AnswerBean;
-import ru.nstu.exam.bean.EntityBean;
-import ru.nstu.exam.bean.ExamPeriodBean;
-import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.entity.*;
+import ru.nstu.exam.entity.utils.RatingMapping;
 import ru.nstu.exam.enums.ExamPeriodState;
+import ru.nstu.exam.enums.TaskType;
 import ru.nstu.exam.repository.TicketRepository;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,16 +21,18 @@ import static ru.nstu.exam.utils.Utils.toMillis;
 @Service
 public class TicketService extends BasePersistentService<Ticket, TicketBean, TicketRepository> {
     private final AnswerService answerService;
-    private final StudentService studentService;
-    private final ExamService examService;
     private final TaskService taskService;
+    private final TeacherService teacherService;
 
-    public TicketService(TicketRepository repository, AnswerService answerService, @Lazy StudentService studentService, @Lazy ExamService examService, TaskService taskService) {
+    public TicketService(TicketRepository repository, AnswerService answerService, TaskService taskService, TeacherService teacherService) {
         super(repository);
         this.answerService = answerService;
-        this.studentService = studentService;
-        this.examService = examService;
         this.taskService = taskService;
+        this.teacherService = teacherService;
+    }
+
+    public List<TicketBean> findByPeriod(ExamPeriod period) {
+        return mapToBeans(getRepository().findAllByExamPeriod(period));
     }
 
     public void generateTickets(ExamRule examRule, ExamPeriod examPeriod, List<Group> groups) {
@@ -66,7 +67,7 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         }
     }
 
-    public void update(List<TicketBean> ticketBeans) {
+    public void update(List<UpdateTicketBean> ticketBeans) {
         if (ticketBeans == null) {
             userError("Null list");
         }
@@ -74,11 +75,11 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
             userError("Some tickets are null or their id are null");
         }
 
-        ticketBeans.sort(comparingLong(EntityBean::getId));
+        ticketBeans.sort(comparingLong(UpdateTicketBean::getId));
 
         List<Ticket> tickets = getRepository().findAllById(
                 ticketBeans.stream()
-                        .map(EntityBean::getId)
+                        .map(UpdateTicketBean::getId)
                         .collect(Collectors.toList())
         );
 
@@ -91,7 +92,7 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         tickets.sort(comparingLong(Ticket::getId));
 
         for (int i = 0; i < ticketBeans.size(); i++) {
-            TicketBean ticketBean = ticketBeans.get(i);
+            UpdateTicketBean ticketBean = ticketBeans.get(i);
             Ticket ticket = tickets.get(i);
 
             ticket.setSemesterRating(ticketBean.getSemesterRating());
@@ -105,16 +106,15 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return mapToBeans(exam.getExamPeriods().stream()
                 .map(ExamPeriod::getTickets)
                 .flatMap(Collection::stream)
-                .filter(t -> exam.getExamRule().getMinimalRating() > (t.getExamRating()))
+                .filter(t -> exam.getExamRule().getMinimalRating() > t.getExamRating())
                 .collect(Collectors.toList()));
     }
 
-    public List<TicketBean> getStudentTickets(Student student) {
-        List<Ticket> tickets = getRepository().findAllByStudent(student);
-        return mapToBeans(tickets);
+    public List<StudentTicketBean> getStudentTickets(Student student) {
+        return getRepository().findAllByStudent(student).stream().map(this::mapToStudentBean).collect(Collectors.toList());
     }
 
-    public List<AnswerBean> getAnswers(Long ticketId, Pageable pageable) {
+    public List<StudentAnswerBean> getAnswers(Long ticketId, Pageable pageable) {
         Ticket ticket = findById(ticketId);
         if (ticket == null) {
             userError("No ticket found");
@@ -133,15 +133,8 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         ticketBean.setAllowed(entity.getAllowed());
         ticketBean.setExamRating(entity.getExamRating());
         ticketBean.setSemesterRating(entity.getSemesterRating());
-        ticketBean.setStudent(studentService.map(entity.getStudent()));
-
-        ExamPeriodBean examPeriodBean = new ExamPeriodBean();
-        examPeriodBean.setId(entity.getExamPeriod().getId());
-        examPeriodBean.setStart(toMillis(entity.getExamPeriod().getStart()));
-        examPeriodBean.setEnd(toMillis(entity.getExamPeriod().getEnd()));
-        examPeriodBean.setExam(examService.map(entity.getExamPeriod().getExam()));
-
-        ticketBean.setExamPeriod(examPeriodBean);
+        ticketBean.setStudentId(entity.getStudent().getId());
+        ticketBean.setExamPeriodId(entity.getExamPeriod().getId());
         return ticketBean;
     }
 
@@ -150,7 +143,45 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return new Ticket();
     }
 
-    public List<TicketBean> findByPeriod(ExamPeriod period) {
-        return mapToBeans(getRepository().findAllByExamPeriod(period));
+    private StudentTicketBean mapToStudentBean(Ticket ticket) {
+        ExamPeriod examPeriod = ticket.getExamPeriod();
+        Exam exam = examPeriod.getExam();
+        Teacher teacher = exam.getTeacher();
+        Discipline discipline = exam.getDiscipline();
+
+        StudentTicketBean bean = new StudentTicketBean();
+
+        bean.setId(ticket.getId());
+        bean.setAllowed(ticket.getAllowed());
+        bean.setExamRating(ticket.getExamRating());
+        bean.setSemesterRating(ticket.getSemesterRating());
+
+        ExamPeriodBean examPeriodBean = new ExamPeriodBean();
+        examPeriodBean.setId(examPeriod.getId());
+        examPeriodBean.setStart(toMillis(examPeriod.getStart()));
+        examPeriodBean.setEnd(toMillis(examPeriod.getEnd()));
+        examPeriodBean.setState(examPeriod.getState());
+        examPeriodBean.setExamId(examPeriod.getExam().getId());
+        bean.setExamPeriod(examPeriodBean);
+
+        bean.setDisciplineName(discipline.getName());
+
+        bean.setTeacher(teacherService.map(teacher));
+
+        RatingSystem ratingSystem = ticket.getExamPeriod().getExam().getExamRule().getRatingSystem();
+        Integer maxQuestionRating = ratingSystem.getRatingMappings().stream()
+                .filter(rm -> rm.getTaskType() == TaskType.QUESTION)
+                .max(Comparator.comparingInt(RatingMapping::getRating))
+                .map(RatingMapping::getRating)
+                .orElse(0);
+        Integer maxExerciseRating = ratingSystem.getRatingMappings().stream()
+                .filter(rm -> rm.getTaskType() == TaskType.EXERCISE)
+                .max(Comparator.comparingInt(RatingMapping::getRating))
+                .map(RatingMapping::getRating)
+                .orElse(0);
+        bean.setMaxQuestionRating(maxQuestionRating);
+        bean.setMaxExerciseRating(maxExerciseRating);
+
+        return bean;
     }
 }

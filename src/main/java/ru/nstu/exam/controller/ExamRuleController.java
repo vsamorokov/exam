@@ -1,7 +1,9 @@
 package ru.nstu.exam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.CreateExamRuleBean;
 import ru.nstu.exam.bean.ExamRuleBean;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.ExamRuleService;
@@ -18,13 +20,21 @@ public class ExamRuleController {
 
     @IsTeacher
     @GetMapping
+    @Operation(summary = "Get all exam rules")
     public List<ExamRuleBean> getAll() {
         return examRuleService.findAll();
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get one exam rule")
+    public ExamRuleBean getOne(@PathVariable Long id) {
+        return examRuleService.findOne(id);
+    }
+
     @IsTeacher
     @PostMapping
-    public ExamRuleBean create(@RequestBody ExamRuleBean examRuleBean) {
+    @Operation(summary = "Create an exam rule")
+    public ExamRuleBean create(@RequestBody CreateExamRuleBean examRuleBean) {
         return examRuleService.createExamRule(examRuleBean);
     }
 }

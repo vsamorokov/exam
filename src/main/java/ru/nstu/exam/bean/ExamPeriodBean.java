@@ -15,7 +15,7 @@ public class ExamPeriodBean extends EntityBean {
 
     private Long end;
 
-    private ExamBean exam;
+    private Long examId;
 
     private ExamPeriodState state;
 }

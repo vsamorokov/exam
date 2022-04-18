@@ -1,9 +1,10 @@
 package ru.nstu.exam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.TicketBean;
+import ru.nstu.exam.bean.StudentTicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsStudent;
@@ -21,25 +22,29 @@ public class StudentController {
 
     @IsAdmin
     @PostMapping("/bulk")
+    @Operation(summary = "Create many students")
     public List<StudentBean> addStudents(@RequestBody List<StudentBean> students) {
         return studentService.addStudents(students);
     }
 
     @IsAdmin
     @PostMapping
+    @Operation(summary = "Create one student")
     public StudentBean createStudent(@RequestBody StudentBean student) {
         return studentService.createStudent(student);
     }
 
     @IsStudent
     @GetMapping("/me")
+    @Operation(summary = "Get info about sender student")
     public StudentBean getSelf(@UserAccount Account account) {
         return studentService.findByAccount(account);
     }
 
     @IsStudent
-    @GetMapping("/ticket")
-    public List<TicketBean> getTickets(@UserAccount Account account) {
+    @GetMapping("/tickets")
+    @Operation(summary = "Get student's tickets")
+    public List<StudentTicketBean> getTickets(@UserAccount Account account) {
         return studentService.getTickets(account);
     }
 }

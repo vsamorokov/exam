@@ -14,9 +14,9 @@ public class ExamRuleBean extends EntityBean {
 
     private String name;
 
-    private List<ThemeBean> themes;
+    private List<Long> themeIds;
 
-    private DisciplineBean discipline;
+    private Long disciplineId;
 
     private Integer questionCount;
 

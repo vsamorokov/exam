@@ -3,6 +3,7 @@ package ru.nstu.exam.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
+import ru.nstu.exam.enums.AnswerStatus;
 
 import javax.persistence.*;
 import java.util.List;
@@ -27,4 +28,11 @@ public class Answer extends PersistableEntity {
 
     @OneToMany(mappedBy = "answer")
     private List<Message> messages;
+
+    @Column(name = "number")
+    private Integer number;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private AnswerStatus status;
 }

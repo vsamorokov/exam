@@ -7,10 +7,7 @@ import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.repository.AccountRepository;
 
-import java.util.Collections;
-
 import static ru.nstu.exam.exception.ExamException.userError;
-import static ru.nstu.exam.security.UserRole.ROLE_ADMIN;
 
 @Service
 public class AccountService extends BasePersistentService<Account, AccountBean, AccountRepository> {
@@ -24,6 +21,14 @@ public class AccountService extends BasePersistentService<Account, AccountBean, 
 
     public Account findAccountByUsername(String username) {
         return getRepository().findByUsername(username);
+    }
+
+    public AccountBean findOne(Long accountId) {
+        Account account = findById(accountId);
+        if (account == null) {
+            userError("Account not found");
+        }
+        return map(account);
     }
 
     public AccountBean createAccount(AccountBean accountBean) {

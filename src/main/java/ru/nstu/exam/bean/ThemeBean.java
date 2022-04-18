@@ -9,5 +9,5 @@ import lombok.EqualsAndHashCode;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ThemeBean extends EntityBean {
     private String name;
-    private DisciplineBean discipline;
+    private Long disciplineId;
 }

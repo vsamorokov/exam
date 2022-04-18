@@ -1,5 +1,6 @@
 package ru.nstu.exam.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.ThemeBean;
@@ -16,12 +17,20 @@ public class ThemeController {
 
     @IsTeacher
     @GetMapping
+    @Operation(summary = "Get all themes")
     public List<ThemeBean> getAll() {
         return themeService.findAll();
     }
 
+    @GetMapping("/{themeId}")
+    @Operation(summary = "Get one theme")
+    public ThemeBean getOne(@PathVariable Long themeId) {
+        return themeService.findOne(themeId);
+    }
+
     @IsTeacher
     @PostMapping
+    @Operation(summary = "Create a theme")
     public ThemeBean create(@RequestBody ThemeBean themeBean) {
         return themeService.createTheme(themeBean);
     }

@@ -41,4 +41,8 @@ public class ExamRule extends PersistableEntity {
 
     @Column(name = "minimal_rating", nullable = false)
     private Integer minimalRating;
+
+    @ManyToOne
+    @JoinColumn(name = "rating_system_id")
+    private RatingSystem ratingSystem;
 }

@@ -2,10 +2,7 @@ package ru.nstu.exam.service;
 
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.DisciplineBean;
-import ru.nstu.exam.bean.ExamRuleBean;
 import ru.nstu.exam.entity.Discipline;
-import ru.nstu.exam.entity.ExamRule;
-import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Teacher;
 import ru.nstu.exam.repository.DisciplineRepository;
 
@@ -20,12 +17,20 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
         super(repository);
     }
 
-    public DisciplineBean createDiscipline(DisciplineBean disciplineBean){
+    public DisciplineBean createDiscipline(DisciplineBean disciplineBean) {
         return map(save(map(disciplineBean)));
     }
 
-    public List<DisciplineBean> findByTeacher(Teacher teacher){
+    public List<DisciplineBean> findByTeacher(Teacher teacher) {
         return mapToBeans(getRepository().findByTeachersContaining(teacher));
+    }
+
+    public DisciplineBean findOne(Long disciplineId) {
+        Discipline discipline = findById(disciplineId);
+        if (discipline == null) {
+            userError("Discipline not found");
+        }
+        return null;
     }
 
     @Override

@@ -11,13 +11,9 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExamBean extends EntityBean {
 
-    private ExamRuleBean examRule;
+    private Long examRuleId;
 
-    private TeacherBean teacher;
+    private Long disciplineId;
 
-    private DisciplineBean discipline;
-
-    private List<GroupBean> groups;
-
-    private Long startTime; // for first creation
+    private List<Long> groupIds;
 }
