@@ -54,6 +54,14 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return mapToBeans(getRepository().findAllByTeacher(teacher));
     }
 
+    public ExamBean findOne(Long examId) {
+        Exam exam = findById(examId);
+        if (exam == null) {
+            userError("Exam not found");
+        }
+        return map(exam);
+    }
+
     public ExamBean createExam(CreateExamBean examBean, Account account) {
         if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
             serverError("Not teacher cannot create exam");
@@ -339,8 +347,8 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     protected ExamBean map(Exam entity) {
         ExamBean examBean = new ExamBean();
         examBean.setId(entity.getId());
-        examBean.setDisciplineId(entity.getDiscipline().getId());
-        examBean.setExamRuleId(entity.getExamRule().getId());
+        examBean.setDisciplineId(entity.getDiscipline() == null ? null : entity.getDiscipline().getId());
+        examBean.setExamRuleId(entity.getExamRule() == null ? null : entity.getExamRule().getId());
         examBean.setGroupIds(entity.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
         return examBean;
     }

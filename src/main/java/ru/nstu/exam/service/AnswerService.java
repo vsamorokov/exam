@@ -154,14 +154,14 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
         StudentAnswerBean bean = new StudentAnswerBean();
         bean.setId(entity.getId());
         bean.setRating(entity.getRating());
-        bean.setTicketId(entity.getTicket().getId());
+        bean.setTicketId(entity.getTicket() == null ? null : entity.getTicket().getId());
 
         StudentTaskBean taskBean = new StudentTaskBean();
         taskBean.setId(task.getId());
         taskBean.setTaskType(task.getTaskType());
-        taskBean.setArtefactId(task.getArtefact().getId());
+        taskBean.setArtefactId(task.getArtefact() == null ? null : task.getArtefact().getId());
         taskBean.setText(task.getText());
-        taskBean.setThemeName(task.getTheme().getName());
+        taskBean.setThemeName(task.getTheme() == null ? null : task.getTheme().getName());
         bean.setTask(taskBean);
 
         bean.setNumber(entity.getNumber());

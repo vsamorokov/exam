@@ -27,6 +27,12 @@ public class ExamController {
         return examService.findAll(account);
     }
 
+    @GetMapping("/exams/{examId}")
+    @Operation(summary = "Get exam by id")
+    public ExamBean getOne(@PathVariable Long examId) {
+        return examService.findOne(examId);
+    }
+
     @IsTeacher
     @PostMapping("/exams")
     @Operation(summary = "Create an exam")
