@@ -9,7 +9,11 @@ public class ExamException extends RuntimeException {
     private final HttpStatus status;
 
     public ExamException(String message, HttpStatus status) {
-        super(message);
+        this(message, status, null);
+    }
+
+    public ExamException(String message, HttpStatus status, Throwable throwable) {
+        super(message, throwable);
         this.status = status;
     }
 
@@ -18,7 +22,10 @@ public class ExamException extends RuntimeException {
     }
 
     public static <T> T serverError(String message) {
-        throw new ExamException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        return serverError(message, null);
     }
 
+    public static <T> T serverError(String message, Throwable throwable) {
+        throw new ExamException(message, HttpStatus.INTERNAL_SERVER_ERROR, throwable);
+    }
 }

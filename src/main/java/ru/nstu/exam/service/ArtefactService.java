@@ -53,7 +53,7 @@ public class ArtefactService {
             userError("File must not be null");
         }
         if (file.getSize() > maxFileSize) {
-            userError("File size is too big (max is " + maxFileSize / (1024 * 1024) + " MB)");
+            userError("File size is too big (max is " + maxFileSize * 1.0 / (1024 * 1024) + " MB)");
         }
         if (!StringUtils.hasText(file.getOriginalFilename())) {
             userError("File name must not be empty");
@@ -69,7 +69,7 @@ public class ArtefactService {
         artefact.setLocalName(generateLocalName(artefactType.getExtension()));
         Artefact saved = artefactRepository.save(artefact);
 
-        File fileToSave = new File(localDirectory, saved.getLocalName());
+        File fileToSave = new File(saved.getLocalName());
 
         try {
             FileUtils.copyInputStreamToFile(file.getInputStream(), fileToSave);
@@ -85,7 +85,7 @@ public class ArtefactService {
     }
 
     private String generateLocalName(String extension) {
-        return UUID.randomUUID().toString() + "." + extension;
+        return new File(localDirectory, UUID.randomUUID().toString() + "." + extension).getAbsolutePath();
     }
 
     private ArtefactType getArtefactType(MultipartFile file) {
@@ -112,7 +112,7 @@ public class ArtefactService {
             IOUtils.copyLarge(inputStream, outputStream);
             outputStream.flush();
         } catch (IOException e) {
-            serverError("Error during file send");
+            serverError("Error during file send", e);
         }
     }
 

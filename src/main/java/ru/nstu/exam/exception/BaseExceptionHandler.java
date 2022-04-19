@@ -22,5 +22,4 @@ public class BaseExceptionHandler {
 
         return ResponseEntity.internalServerError().build();
     }
-
 }

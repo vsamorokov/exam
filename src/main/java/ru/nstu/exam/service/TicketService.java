@@ -35,6 +35,13 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
         return mapToBeans(getRepository().findAllByExamPeriod(period));
     }
 
+    public void deleteByPeriod(ExamPeriod examPeriod) {
+        for (Ticket ticket : getRepository().findAllByExamPeriod(examPeriod)) {
+            answerService.deleteByTicket(ticket);
+            delete(ticket);
+        }
+    }
+
     public void generateTickets(ExamRule examRule, ExamPeriod examPeriod, List<Group> groups) {
         List<Task> questions = taskService.getQuestions(examRule);
         List<Task> exercises = taskService.getExercises(examRule);

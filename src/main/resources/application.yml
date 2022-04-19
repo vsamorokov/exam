@@ -15,3 +15,8 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+
+file:
+  local-dir: /opt/exam/data/files
+  max-size-bytes: 10485760 # 10MB

@@ -21,13 +21,11 @@ import static ru.nstu.exam.exception.ExamException.userError;
 public class AnswerService extends BasePersistentService<Answer, StudentAnswerBean, AnswerRepository> {
     private final Random random = new Random();
 
-    private final TaskService taskService;
     private final MessageService messageService;
     private final TeacherService teacherService;
 
-    public AnswerService(AnswerRepository repository, TaskService taskService, MessageService messageService, TeacherService teacherService) {
+    public AnswerService(AnswerRepository repository, MessageService messageService, TeacherService teacherService) {
         super(repository);
-        this.taskService = taskService;
         this.messageService = messageService;
         this.teacherService = teacherService;
     }
@@ -36,12 +34,11 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
         try {
             Set<Long> usedQuestions = new HashSet<>(examRule.getQuestionCount());
             Set<Long> usedExercises = new HashSet<>(examRule.getExerciseCount());
-            int number = 1;
             for (int i = 0; i < examRule.getQuestionCount(); i++) {
-                generateAnswer(ticket, questions, usedQuestions, number++);
+                generateAnswer(ticket, questions, usedQuestions, i + 1);
             }
             for (int i = 0; i < examRule.getExerciseCount(); i++) {
-                generateAnswer(ticket, exercises, usedExercises, number++);
+                generateAnswer(ticket, exercises, usedExercises, i + 1);
             }
         } catch (Exception e) {
             List<Answer> answers = getRepository().findAllByTicket(ticket);
@@ -66,6 +63,12 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
 
     public List<StudentAnswerBean> findByTicket(Ticket ticket, Pageable pageable) {
         return getRepository().findAllByTicket(ticket, pageable).stream().map(this::map).collect(Collectors.toList());
+    }
+
+    public void deleteByTicket(Ticket ticket) {
+        for (Answer answer : getRepository().findAllByTicket(ticket)) {
+            delete(answer);
+        }
     }
 
     public Page<MessageBean> findAllMessages(Long answerId, Account account, Pageable pageable) {

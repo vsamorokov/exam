@@ -10,8 +10,6 @@ import ru.nstu.exam.enums.TaskType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StudentTaskBean extends EntityBean {
 
-    private Integer cost;
-
     private String text;
 
     private Long artefactId;

@@ -174,6 +174,16 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
             userError("That teacher cannot do this");
         }
+
+        List<ExamPeriod> periods = exam.getExamPeriods();
+        if (periods.stream().anyMatch(p -> ExamPeriodState.PROGRESS.equals(p.getState()))) {
+            userError("Exam in progress");
+        }
+        for (ExamPeriod examPeriod : periods) {
+            ticketService.deleteByPeriod(examPeriod);
+            examPeriod.setDeleted(true);
+            examPeriodRepository.save(examPeriod);
+        }
         delete(exam);
     }
 
