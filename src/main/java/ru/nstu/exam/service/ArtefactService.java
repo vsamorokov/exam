@@ -3,7 +3,6 @@ package ru.nstu.exam.service;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -119,7 +118,10 @@ public class ArtefactService {
     public ArtefactBean getInfo(Long artefactId) {
         Artefact artefact = artefactRepository.findById(artefactId).orElseGet(() -> userError("Artefact not found"));
         ArtefactBean artefactBean = new ArtefactBean();
-        BeanUtils.copyProperties(artefact, artefactBean);
+        artefactBean.setId(artefact.getId());
+        artefactBean.setArtefactType(artefact.getArtefactType());
+        artefactBean.setFileSize(artefact.getFileSize());
+        artefactBean.setFileName(artefact.getFileName());
         return artefactBean;
     }
 

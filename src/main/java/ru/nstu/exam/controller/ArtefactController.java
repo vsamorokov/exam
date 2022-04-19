@@ -29,7 +29,7 @@ public class ArtefactController {
         artefactService.downloadFile(artefactId, response);
     }
 
-    @GetMapping(value = "/{artefactId}")
+    @GetMapping(value = "/{artefactId}/info")
     @Operation(summary = "Get info about file")
     public ArtefactBean getInfo(@PathVariable Long artefactId) {
         return artefactService.getInfo(artefactId);
