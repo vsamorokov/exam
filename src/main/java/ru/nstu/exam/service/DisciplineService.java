@@ -30,7 +30,7 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
         if (discipline == null) {
             userError("Discipline not found");
         }
-        return null;
+        return map(discipline);
     }
 
     @Override
