@@ -24,5 +24,5 @@ public class ExamRuleBean extends EntityBean {
 
     private Integer duration; // minutes
 
-    private Integer minimalRating; // minutes
+    private Integer minimalRating;
 }

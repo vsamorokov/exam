@@ -42,11 +42,15 @@ public class AccountService extends BasePersistentService<Account, AccountBean, 
     }
 
     public void changePassword(AccountBean accountBean, Account account) {
-        if(!StringUtils.hasText(accountBean.getPassword())){
+        if (!StringUtils.hasText(accountBean.getPassword())) {
             userError("Password must not be empty");
         }
         account.setPassword(passwordEncoder.encode(accountBean.getPassword()));
         save(account);
+    }
+
+    public AccountBean me(Account account) {
+        return map(account);
     }
 
     @Override

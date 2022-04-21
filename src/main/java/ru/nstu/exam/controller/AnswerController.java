@@ -1,6 +1,7 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import ru.nstu.exam.service.AnswerService;
 @RestController
 @RequestMapping("/answer")
 @RequiredArgsConstructor
+@Tag(name = "Answer")
 public class AnswerController {
     private final AnswerService answerService;
 

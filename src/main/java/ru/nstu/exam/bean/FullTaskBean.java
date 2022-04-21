@@ -8,11 +8,11 @@ import ru.nstu.exam.enums.TaskType;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TaskBean extends EntityBean {
+public class FullTaskBean extends EntityBean {
 
     private String text;
 
-    private Long artefactId;
+    private ArtefactBean artefact;
 
     private TaskType taskType;
 

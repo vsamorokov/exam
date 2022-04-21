@@ -1,6 +1,7 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.AccountBean;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/account")
+@Tag(name = "Account")
 public class AccountController {
 
     private final AccountService accountService;
@@ -29,6 +31,12 @@ public class AccountController {
     @Operation(summary = "Get one account")
     public AccountBean findOne(@PathVariable Long accountId) {
         return accountService.findOne(accountId);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get info about self")
+    public AccountBean me(@UserAccount Account account) {
+        return accountService.me(account);
     }
 
     @PostMapping("/change-password")

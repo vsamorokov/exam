@@ -1,8 +1,10 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.FullTaskBean;
 import ru.nstu.exam.bean.TaskBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
@@ -14,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/task")
 @RequiredArgsConstructor
+@Tag(name = "Tasks")
 public class TaskController {
 
     private final TaskService taskService;
@@ -27,8 +30,8 @@ public class TaskController {
 
     @GetMapping("/{taskId}")
     @Operation(summary = "Get one task")
-    public TaskBean findOne(@PathVariable Long taskId) {
-        return taskService.findOne(taskId);
+    public FullTaskBean findOne(@PathVariable Long taskId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
+        return taskService.findOne(taskId, level);
     }
 
     @IsTeacher
@@ -36,5 +39,19 @@ public class TaskController {
     @Operation(summary = "Create a task")
     public TaskBean createTask(@RequestBody TaskBean taskBean) {
         return taskService.createTask(taskBean);
+    }
+
+    @IsTeacher
+    @PutMapping("/{taskId}")
+    @Operation(summary = "Update a task")
+    public TaskBean updateTask(@PathVariable Long taskId, @RequestBody TaskBean taskBean) {
+        return taskService.update(taskId, taskBean);
+    }
+
+    @IsTeacher
+    @DeleteMapping("/{taskId}")
+    @Operation(summary = "Delete a task (also deletes artefact)")
+    public void deleteTask(@PathVariable Long taskId) {
+        taskService.delete(taskId);
     }
 }

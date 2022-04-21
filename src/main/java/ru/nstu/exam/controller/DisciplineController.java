@@ -1,11 +1,10 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.DisciplineBean;
-import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.GroupBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.DisciplineService;
@@ -17,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/discipline")
 @RequiredArgsConstructor
+@Tag(name = "Disciplines")
 public class DisciplineController {
     private final ExamRuleService examRuleService;
     private final DisciplineService disciplineService;
@@ -30,8 +30,8 @@ public class DisciplineController {
 
     @GetMapping("/{disciplineId}")
     @Operation(summary = "Get one discipline")
-    public DisciplineBean getOne(@PathVariable Long disciplineId) {
-        return disciplineService.findOne(disciplineId);
+    public FullDisciplineBean getOne(@PathVariable Long disciplineId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
+        return disciplineService.findOne(disciplineId, level);
     }
 
     @IsAdmin
@@ -39,6 +39,25 @@ public class DisciplineController {
     @Operation(summary = "Create a discipline")
     public DisciplineBean create(@RequestBody DisciplineBean disciplineBean) {
         return disciplineService.createDiscipline(disciplineBean);
+    }
+
+    @IsAdmin
+    @PutMapping("/{disciplineId}")
+    @Operation(summary = "Update a discipline")
+    public DisciplineBean update(@PathVariable Long disciplineId, @RequestBody DisciplineBean disciplineBean) {
+        return disciplineService.update(disciplineId, disciplineBean);
+    }
+
+    @IsAdmin
+    @DeleteMapping("/{disciplineId}")
+    @Operation(summary = "Delete a discipline")
+    public void delete(@PathVariable Long disciplineId) {
+        disciplineService.delete(disciplineId);
+    }
+
+    @GetMapping("/{disciplineId}/themes")
+    public List<ThemeBean> getThemes(@PathVariable Long disciplineId) {
+        return disciplineService.getThemes(disciplineId);
     }
 
     @IsTeacher

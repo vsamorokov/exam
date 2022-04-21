@@ -1,6 +1,7 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.CreateGroupBean;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/group")
 @RequiredArgsConstructor
+@Tag(name = "Group")
 public class GroupController {
     private final GroupService groupService;
     private final StudentService studentService;
@@ -47,7 +49,7 @@ public class GroupController {
     }
 
     @IsTeacher
-    @GetMapping("/{groupId}/student")
+    @GetMapping("/{groupId}/students")
     @Operation(summary = "Get students in a group")
     public List<StudentBean> getStudents(@PathVariable Long groupId) {
         return studentService.findByGroup(groupId);

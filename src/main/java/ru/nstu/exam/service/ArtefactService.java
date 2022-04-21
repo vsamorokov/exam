@@ -1,6 +1,7 @@
 package ru.nstu.exam.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import java.util.UUID;
 import static ru.nstu.exam.exception.ExamException.serverError;
 import static ru.nstu.exam.exception.ExamException.userError;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArtefactService {
@@ -129,4 +131,15 @@ public class ArtefactService {
         return artefactRepository.findById(id).orElse(null);
     }
 
+    public void delete(Long id) {
+        Artefact artefact = artefactRepository.findById(id).orElseGet(() -> userError("Artefact not found"));
+        delete(artefact);
+    }
+
+    public void delete(Artefact artefact) {
+        if (!FileUtils.deleteQuietly(new File(artefact.getLocalName()))) {
+            log.error("File: " + artefact.getLocalName() + " was not deleted");
+        }
+        artefactRepository.delete(artefact);
+    }
 }

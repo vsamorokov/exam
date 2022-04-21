@@ -42,7 +42,6 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
         return map(save(group));
     }
 
-
     public GroupBean editGroup(Long id, CreateGroupBean groupBean) {
         Group group = findById(id);
         if (group == null) {
@@ -50,16 +49,17 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
         }
         List<Discipline> disciplines = getDisciplines(groupBean);
 
-        if (groupBean.getName() != null) {
-            group.setName(groupBean.getName());
+        if (groupBean.getName() == null) {
+            userError("Group must have name");
         }
+        group.setName(groupBean.getName());
 
-        if (!CollectionUtils.isEmpty(disciplines)) {
-            group.setDisciplines(disciplines);
+        if (CollectionUtils.isEmpty(disciplines)) {
+            userError("Group must have at least one discipline");
         }
+        group.setDisciplines(disciplines);
         return map(save(group));
     }
-
 
     public List<GroupBean> findByDiscipline(Long disciplineId) {
         if (disciplineId == null) {

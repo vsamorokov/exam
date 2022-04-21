@@ -23,7 +23,7 @@ public class TicketController {
     private final TicketService ticketService;
 
     @IsTeacher
-    @PostMapping("/rating")
+    @PutMapping("/rating")
     @Operation(summary = "Update rating")
     public void updateTicketsRating(@RequestBody List<UpdateTicketBean> ticketBeans) {
         ticketService.update(ticketBeans);

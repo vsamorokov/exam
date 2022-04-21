@@ -2,6 +2,7 @@ package ru.nstu.exam.controller;
 
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.CreateTeacherBean;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/teacher")
 @RequiredArgsConstructor
+@Tag(name = "Teacher")
 public class TeacherController {
 
     private final TeacherService teacherService;
@@ -42,12 +44,4 @@ public class TeacherController {
     public List<DisciplineBean> getDisciplines(@UserAccount Account account) {
         return teacherService.findDisciplines(account);
     }
-
-    @IsTeacher
-    @GetMapping("/me")
-    @Operation(summary = "Get info about sender teacher")
-    public TeacherBean getSelf(@UserAccount Account account) {
-        return teacherService.getSelf(account);
-    }
-
 }

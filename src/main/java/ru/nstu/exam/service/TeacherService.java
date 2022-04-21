@@ -29,10 +29,6 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
         this.disciplineService = disciplineService;
     }
 
-    public TeacherBean getSelf(Account account) {
-        return map(getRepository().findByAccount(account));
-    }
-
     public Teacher findByAccount(Account account) {
         return getRepository().findByAccount(account);
     }
