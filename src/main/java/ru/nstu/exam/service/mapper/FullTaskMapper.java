@@ -16,15 +16,19 @@ public class FullTaskMapper implements Mapper<FullTaskBean, Task> {
             taskBean.setId(entity.getId());
             taskBean.setText(entity.getText());
             taskBean.setTaskType(entity.getTaskType());
-            taskBean.setThemeId(entity.getTheme().getId());
+            if (entity.getTheme() != null) {
+                taskBean.setThemeId(entity.getTheme().getId());
+            }
 
             Artefact artefact = entity.getArtefact();
-            ArtefactBean artefactBean = new ArtefactBean();
-            artefactBean.setId(artefact.getId());
-            artefactBean.setArtefactType(artefact.getArtefactType());
-            artefactBean.setFileName(artefact.getFileName());
-            artefactBean.setFileSize(artefact.getFileSize());
-            taskBean.setArtefact(artefactBean);
+            if (artefact != null) {
+                ArtefactBean artefactBean = new ArtefactBean();
+                artefactBean.setId(artefact.getId());
+                artefactBean.setArtefactType(artefact.getArtefactType());
+                artefactBean.setFileName(artefact.getFileName());
+                artefactBean.setFileSize(artefact.getFileSize());
+                taskBean.setArtefact(artefactBean);
+            }
         }
         return taskBean;
     }

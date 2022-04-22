@@ -1,5 +1,6 @@
 package ru.nstu.exam.service.mapper;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.FullDisciplineBean;
@@ -25,8 +26,8 @@ public class FullDisciplineMapper implements Mapper<FullDisciplineBean, Discipli
             bean.setName(entity.getName());
         }
         if (level >= 1) {
-            List<FullThemeBean> themeBeans = new ArrayList<>(entity.getThemes().size());
-            for (Theme theme : entity.getThemes()) {
+            List<FullThemeBean> themeBeans = new ArrayList<>(CollectionUtils.emptyIfNull(entity.getThemes()).size());
+            for (Theme theme : CollectionUtils.emptyIfNull(entity.getThemes())) {
                 themeBeans.add(themeMapper.map(theme, level - 1));
             }
             bean.setThemes(themeBeans);

@@ -23,8 +23,10 @@ public class FullThemeMapper implements Mapper<FullThemeBean, Theme> {
         FullThemeBean themeBean = new FullThemeBean();
         if (level >= 0) {
             themeBean.setId(entity.getId());
-            themeBean.setName(themeBean.getName());
-            themeBean.setDisciplineId(entity.getDiscipline().getId());
+            themeBean.setName(entity.getName());
+            if (entity.getDiscipline() != null) {
+                themeBean.setDisciplineId(entity.getDiscipline().getId());
+            }
         }
         if (level >= 1) {
             Collection<Task> tasks = CollectionUtils.emptyIfNull(entity.getTasks());
