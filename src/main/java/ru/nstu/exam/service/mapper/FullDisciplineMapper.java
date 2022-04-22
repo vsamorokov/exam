@@ -33,6 +33,6 @@ public class FullDisciplineMapper implements Mapper<FullDisciplineBean, Discipli
             bean.setThemes(themeBeans);
         }
 
-        return null;
+        return bean;
     }
 }
