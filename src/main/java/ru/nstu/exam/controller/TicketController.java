@@ -1,6 +1,7 @@
 package ru.nstu.exam.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/ticket")
 @RequiredArgsConstructor
+@Tag(name = "Ticket")
 public class TicketController {
 
     private final TicketService ticketService;
