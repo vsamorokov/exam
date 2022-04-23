@@ -21,8 +21,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
+import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.serverError;
 import static ru.nstu.exam.exception.ExamException.userError;
 
@@ -37,6 +39,8 @@ public class ArtefactService {
 
     @Value("${file.local-dir:data/files}")
     private String localDirectory;
+
+    private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS");
 
     @PostConstruct
     private void init() {
@@ -75,6 +79,7 @@ public class ArtefactService {
         try {
             FileUtils.copyInputStreamToFile(file.getInputStream(), fileToSave);
         } catch (IOException e) {
+            delete(artefact, false);
             userError("File upload error");
         }
         ArtefactBean artefactBean = new ArtefactBean();
@@ -92,7 +97,9 @@ public class ArtefactService {
             serverError("Cannot create local directory");
         }
 
-        return new File(dir, originalName + "_" + UUID.randomUUID().toString() + "." + extension).getAbsolutePath();
+        String fileName = originalName + "_" + LocalDateTime.now(UTC).format(timeFormat) + "." + extension;
+
+        return new File(dir, fileName).getAbsolutePath();
     }
 
     private ArtefactType getArtefactType(MultipartFile file) {
@@ -143,7 +150,11 @@ public class ArtefactService {
     }
 
     public void delete(Artefact artefact) {
-        if (!FileUtils.deleteQuietly(new File(artefact.getLocalName()))) {
+        delete(artefact, true);
+    }
+
+    private void delete(Artefact artefact, boolean withFile) {
+        if (withFile && !FileUtils.deleteQuietly(new File(artefact.getLocalName()))) {
             log.error("File: " + artefact.getLocalName() + " was not deleted");
         }
         artefactRepository.delete(artefact);
