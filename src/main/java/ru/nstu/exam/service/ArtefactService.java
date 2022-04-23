@@ -67,7 +67,7 @@ public class ArtefactService {
         artefact.setFileSize(file.getSize());
         artefact.setFileName(file.getOriginalFilename());
         artefact.setArtefactType(artefactType);
-        artefact.setLocalName(generateLocalName(artefactType.getExtension()));
+        artefact.setLocalName(generateLocalName(file.getOriginalFilename(), artefactType.getExtension()));
         Artefact saved = artefactRepository.save(artefact);
 
         File fileToSave = new File(saved.getLocalName());
@@ -85,8 +85,14 @@ public class ArtefactService {
         return artefactBean;
     }
 
-    private String generateLocalName(String extension) {
-        return new File(localDirectory, UUID.randomUUID().toString() + "." + extension).getAbsolutePath();
+    private String generateLocalName(String originalName, String extension) {
+
+        File dir = new File(localDirectory, extension);
+        if (!dir.mkdirs()) {
+            serverError("Cannot create local directory");
+        }
+
+        return new File(dir, originalName + "_" + UUID.randomUUID().toString() + "." + extension).getAbsolutePath();
     }
 
     private ArtefactType getArtefactType(MultipartFile file) {
