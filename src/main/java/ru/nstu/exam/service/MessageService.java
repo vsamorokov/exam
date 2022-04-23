@@ -69,10 +69,13 @@ public class MessageService extends BasePersistentService<Message, MessageBean, 
     @Override
     protected MessageBean map(Message entity) {
         MessageBean messageBean = new MessageBean();
-
+        messageBean.setId(entity.getId());
         messageBean.setAccountId(entity.getAccount().getId());
         messageBean.setText(entity.getText());
         messageBean.setSendTime(toMillis(entity.getSendTime()));
+        if (entity.getArtefact() != null) {
+            messageBean.setArtefactId(entity.getArtefact().getId());
+        }
         return messageBean;
     }
 

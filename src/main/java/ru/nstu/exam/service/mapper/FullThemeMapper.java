@@ -5,12 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.FullTaskBean;
 import ru.nstu.exam.bean.FullThemeBean;
-import ru.nstu.exam.entity.Task;
+import ru.nstu.exam.bean.ThemeBean;
 import ru.nstu.exam.entity.Theme;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -20,22 +19,24 @@ public class FullThemeMapper implements Mapper<FullThemeBean, Theme> {
 
     @Override
     public FullThemeBean map(Theme entity, int level) {
-        FullThemeBean themeBean = new FullThemeBean();
+        FullThemeBean bean = new FullThemeBean();
+        ThemeBean themeBean = new ThemeBean();
         if (level >= 0) {
             themeBean.setId(entity.getId());
             themeBean.setName(entity.getName());
             if (entity.getDiscipline() != null) {
                 themeBean.setDisciplineId(entity.getDiscipline().getId());
             }
+            bean.setTheme(themeBean);
         }
         if (level >= 1) {
-            Collection<Task> tasks = CollectionUtils.emptyIfNull(entity.getTasks());
-            List<FullTaskBean> taskBeans = new ArrayList<>(tasks.size());
-            for (Task task : tasks) {
-                taskBeans.add(taskMapper.map(task, level - 1));
-            }
-            themeBean.setTasks(taskBeans);
+            List<FullTaskBean> taskBeans = CollectionUtils.emptyIfNull(entity.getTasks())
+                    .stream()
+                    .map(t -> taskMapper.map(t, level - 1))
+                    .collect(Collectors.toList());
+
+            bean.setTasks(taskBeans);
         }
-        return themeBean;
+        return bean;
     }
 }

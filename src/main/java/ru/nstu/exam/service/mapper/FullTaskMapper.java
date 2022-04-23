@@ -3,6 +3,7 @@ package ru.nstu.exam.service.mapper;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.ArtefactBean;
 import ru.nstu.exam.bean.FullTaskBean;
+import ru.nstu.exam.bean.TaskBean;
 import ru.nstu.exam.entity.Artefact;
 import ru.nstu.exam.entity.Task;
 
@@ -11,7 +12,8 @@ public class FullTaskMapper implements Mapper<FullTaskBean, Task> {
 
     @Override
     public FullTaskBean map(Task entity, int level) {
-        FullTaskBean taskBean = new FullTaskBean();
+        FullTaskBean bean = new FullTaskBean();
+        TaskBean taskBean = new TaskBean();
         if (level >= 0) {
             taskBean.setId(entity.getId());
             taskBean.setText(entity.getText());
@@ -19,7 +21,7 @@ public class FullTaskMapper implements Mapper<FullTaskBean, Task> {
             if (entity.getTheme() != null) {
                 taskBean.setThemeId(entity.getTheme().getId());
             }
-
+            bean.setTask(taskBean);
             Artefact artefact = entity.getArtefact();
             if (artefact != null) {
                 ArtefactBean artefactBean = new ArtefactBean();
@@ -27,9 +29,9 @@ public class FullTaskMapper implements Mapper<FullTaskBean, Task> {
                 artefactBean.setArtefactType(artefact.getArtefactType());
                 artefactBean.setFileName(artefact.getFileName());
                 artefactBean.setFileSize(artefact.getFileSize());
-                taskBean.setArtefact(artefactBean);
+                bean.setArtefact(artefactBean);
             }
         }
-        return taskBean;
+        return bean;
     }
 }

@@ -3,13 +3,13 @@ package ru.nstu.exam.service.mapper;
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.FullDisciplineBean;
 import ru.nstu.exam.bean.FullThemeBean;
 import ru.nstu.exam.entity.Discipline;
-import ru.nstu.exam.entity.Theme;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -21,15 +21,18 @@ public class FullDisciplineMapper implements Mapper<FullDisciplineBean, Discipli
     public FullDisciplineBean map(Discipline entity, int level) {
 
         FullDisciplineBean bean = new FullDisciplineBean();
+        DisciplineBean disciplineBean = new DisciplineBean();
         if (level >= 0) {
-            bean.setId(entity.getId());
-            bean.setName(entity.getName());
+            disciplineBean.setId(entity.getId());
+            disciplineBean.setName(entity.getName());
+            bean.setDiscipline(disciplineBean);
         }
         if (level >= 1) {
-            List<FullThemeBean> themeBeans = new ArrayList<>(CollectionUtils.emptyIfNull(entity.getThemes()).size());
-            for (Theme theme : CollectionUtils.emptyIfNull(entity.getThemes())) {
-                themeBeans.add(themeMapper.map(theme, level - 1));
-            }
+            List<FullThemeBean> themeBeans = CollectionUtils.emptyIfNull(entity.getThemes())
+                    .stream()
+                    .map(t -> themeMapper.map(t, level - 1))
+                    .collect(Collectors.toList());
+
             bean.setThemes(themeBeans);
         }
 
