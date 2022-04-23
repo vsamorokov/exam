@@ -97,7 +97,9 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         ThemeBean themeBean = new ThemeBean();
         themeBean.setId(entity.getId());
         themeBean.setName(entity.getName());
-        themeBean.setDisciplineId(entity.getDiscipline().getId());
+        if (entity.getDiscipline() != null) {
+            themeBean.setDisciplineId(entity.getDiscipline().getId());
+        }
         return themeBean;
     }
 

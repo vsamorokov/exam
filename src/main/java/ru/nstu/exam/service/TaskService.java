@@ -128,8 +128,12 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         taskBean.setId(entity.getId());
         taskBean.setText(entity.getText());
         taskBean.setTaskType(entity.getTaskType());
-        taskBean.setThemeId(entity.getTheme().getId());
-        taskBean.setArtefactId(entity.getArtefact().getId());
+        if (entity.getTheme() != null) {
+            taskBean.setThemeId(entity.getTheme().getId());
+        }
+        if (entity.getArtefact() != null) {
+            taskBean.setArtefactId(entity.getArtefact().getId());
+        }
         return taskBean;
     }
 
