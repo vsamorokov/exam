@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -63,15 +64,13 @@ public class ArtefactService {
         if (!StringUtils.hasText(file.getOriginalFilename())) {
             userError("File name must not be empty");
         }
-        ArtefactType artefactType = getArtefactType(file);
-        if (artefactType == null) {
-            userError("Unknown file type");
-        }
+        Pair<ArtefactType, String> artefactType = getArtefactType(file);
+
         Artefact artefact = new Artefact();
         artefact.setFileSize(file.getSize());
         artefact.setFileName(file.getOriginalFilename());
-        artefact.setArtefactType(artefactType);
-        artefact.setLocalName(generateLocalName(file.getOriginalFilename(), artefactType.getExtension()));
+        artefact.setArtefactType(artefactType.getLeft());
+        artefact.setLocalName(generateLocalName(file.getOriginalFilename(), artefactType.getRight()));
         Artefact saved = artefactRepository.save(artefact);
 
         File fileToSave = new File(saved.getLocalName());
@@ -92,23 +91,35 @@ public class ArtefactService {
 
     private String generateLocalName(String originalName, String extension) {
 
-        File dir = new File(localDirectory, extension);
+        File dir = extension == null ? new File(localDirectory) : new File(localDirectory, extension);
         if (!dir.mkdirs()) {
             serverError("Cannot create local directory");
         }
 
-        String fileName = originalName + "_" + LocalDateTime.now(UTC).format(timeFormat) + "." + extension;
+        String fileName = originalName.replace('.', '_') + "_"
+                + LocalDateTime.now(UTC).format(timeFormat)
+                + (extension == null ? "" : "." + extension);
 
         return new File(dir, fileName).getAbsolutePath();
     }
 
-    private ArtefactType getArtefactType(MultipartFile file) {
+    private Pair<ArtefactType, String> getArtefactType(MultipartFile file) {
         if (file.getOriginalFilename() == null) {
+            return Pair.of(ArtefactType.UNKNOWN, null);
+        }
+        String ext = getExtension(file.getOriginalFilename());
+        if (ext == null) {
+            return Pair.of(ArtefactType.UNKNOWN, null);
+        }
+        return Pair.of(ArtefactType.byExtension(ext), ext);
+    }
+
+    private String getExtension(String fileName) {
+        String[] parts = fileName.split("\\.");
+        if (parts.length == 1) {
             return null;
         }
-        String[] parts = file.getOriginalFilename().split("\\.");
-        String ext = parts[parts.length - 1];
-        return ArtefactType.getExtToType().get(ext);
+        return parts[parts.length - 1];
     }
 
     public void downloadFile(Long artefactId, HttpServletResponse response) {

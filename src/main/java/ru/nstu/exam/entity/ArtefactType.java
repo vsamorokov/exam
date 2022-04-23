@@ -9,13 +9,17 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public enum ArtefactType {
+    UNKNOWN(null),
     PNG("png"),
     JPG("jpg"),
     JPEG("jpeg"),
     XML("xml"),
     DOC("doc"),
     DOCX("docx"),
-    PDF("pdf");
+    PDF("pdf"),
+    TXT("txt"),
+    ZIP("zip"),
+    RAR("rar");
 
     @Getter
     private final String extension;
@@ -24,6 +28,11 @@ public enum ArtefactType {
     private final static Map<ArtefactType, String> typeToExt = new HashMap<>();
     @Getter
     private final static Map<String, ArtefactType> extToType = new HashMap<>();
+
+    public static ArtefactType byExtension(String extension) {
+        ArtefactType artefactType = extToType.get(extension);
+        return artefactType == null ? UNKNOWN : artefactType;
+    }
 
     static {
         for (ArtefactType value : values()) {
