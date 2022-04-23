@@ -34,5 +34,8 @@
     <changeSet id="10" author="vsamorokov">
         <sqlFile path="update-rating-system.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="11" author="vsamorokov">
+        <sqlFile path="length-increase.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
