@@ -92,7 +92,7 @@ public class ArtefactService {
     private String generateLocalName(String originalName, String extension) {
 
         File dir = extension == null ? new File(localDirectory) : new File(localDirectory, extension);
-        if (!dir.mkdirs()) {
+        if (!dir.exists() && !dir.mkdirs()) {
             serverError("Cannot create local directory");
         }
 

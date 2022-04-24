@@ -66,7 +66,7 @@ public class GroupController {
 
     @IsAdmin
     @DeleteMapping("/{groupId}/disciplines")
-    @Operation(summary = "Add disciplines to a group")
+    @Operation(summary = "Remove disciplines from a group")
     public void removeDiscipline(@PathVariable Long groupId, @RequestBody List<Long> disciplineIds) {
         groupService.removeDisciplines(groupId, disciplineIds);
     }

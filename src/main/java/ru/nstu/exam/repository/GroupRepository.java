@@ -10,5 +10,5 @@ import java.util.List;
 public interface GroupRepository extends PersistableEntityRepository<Group> {
     List<Group> findAllByDisciplinesContaining(Discipline discipline);
 
-    Long findCountByName(String name);
+    Long countByName(String name);
 }

@@ -25,3 +25,8 @@ logging:
 auth:
   token:
     expiration-minutes: 10000000
+
+
+file:
+  local-dir: data/files
+  max-size-bytes: 41943040 # 40MB

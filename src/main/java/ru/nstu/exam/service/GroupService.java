@@ -68,7 +68,8 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
         if (name == null) {
             userError("Group must have name");
         }
-        if (getRepository().findCountByName(name) > 0) {
+        Long countByName = getRepository().countByName(name);
+        if (countByName > 0) {
             userError("Group with name (" + name + ") already exists");
         }
     }

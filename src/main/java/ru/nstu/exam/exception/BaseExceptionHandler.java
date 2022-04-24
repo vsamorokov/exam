@@ -17,9 +17,9 @@ public class BaseExceptionHandler {
     }
 
     @ExceptionHandler(value = {Exception.class})
-    protected ResponseEntity<Object> handle(Exception ex) {
+    protected ResponseEntity<String> handle(Exception ex) {
         log.error("Exception occurred", ex);
 
-        return ResponseEntity.internalServerError().build();
+        return ResponseEntity.internalServerError().body(ex.getMessage());
     }
 }
