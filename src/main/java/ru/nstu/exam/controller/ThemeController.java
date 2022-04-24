@@ -48,8 +48,8 @@ public class ThemeController {
 
     @IsTeacher
     @DeleteMapping("/{themeId}")
-    @Operation(summary = "Update a theme")
-    public void update(@PathVariable Long themeId) {
+    @Operation(summary = "Delete a theme")
+    public void delete(@PathVariable Long themeId) {
         themeService.delete(themeId);
     }
 

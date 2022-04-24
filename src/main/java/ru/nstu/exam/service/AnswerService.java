@@ -1,5 +1,6 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -148,6 +149,14 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
         answer.setStatus(status == null ? AnswerStatus.CHECKING : status);
 
         save(answer);
+    }
+
+    @Override
+    public void delete(Answer answer) {
+        for (Message message : CollectionUtils.emptyIfNull(answer.getMessages())) {
+            messageService.delete(message);
+        }
+        super.delete(answer);
     }
 
     @Override

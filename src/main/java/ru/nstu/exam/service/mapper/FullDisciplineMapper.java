@@ -19,10 +19,9 @@ public class FullDisciplineMapper implements Mapper<FullDisciplineBean, Discipli
 
     @Override
     public FullDisciplineBean map(Discipline entity, int level) {
-
         FullDisciplineBean bean = new FullDisciplineBean();
-        DisciplineBean disciplineBean = new DisciplineBean();
         if (level >= 0) {
+            DisciplineBean disciplineBean = new DisciplineBean();
             disciplineBean.setId(entity.getId());
             disciplineBean.setName(entity.getName());
             bean.setDiscipline(disciplineBean);

@@ -1,5 +1,6 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.*;
@@ -127,10 +128,18 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
             userError("No ticket found");
         }
         ExamPeriodState state = ticket.getExamPeriod().getState();
-        if (!state.isAfter(ExamPeriodState.READY)) {
+        if (state.isBefore(ExamPeriodState.PROGRESS)) {
             userError("Exam did not start yet");
         }
         return answerService.findByTicket(ticket, pageable);
+    }
+
+    @Override
+    public void delete(Ticket ticket) {
+        for (Answer answer : CollectionUtils.emptyIfNull(ticket.getAnswers())) {
+            answerService.delete(answer);
+        }
+        super.delete(ticket);
     }
 
     @Override

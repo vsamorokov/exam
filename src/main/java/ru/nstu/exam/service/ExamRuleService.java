@@ -1,14 +1,11 @@
 package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.CreateExamRuleBean;
 import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.entity.Discipline;
-import ru.nstu.exam.entity.ExamRule;
-import ru.nstu.exam.entity.RatingSystem;
-import ru.nstu.exam.entity.Theme;
+import ru.nstu.exam.entity.*;
 import ru.nstu.exam.repository.ExamRuleRepository;
 
 import java.util.ArrayList;
@@ -22,12 +19,14 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
     private final ThemeService themeService;
     private final DisciplineService disciplineService;
     private final RatingSystemService ratingSystemService;
+    private final ExamService examService;
 
-    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, RatingSystemService ratingSystemService) {
+    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, RatingSystemService ratingSystemService, @Lazy ExamService examService) {
         super(repository);
         this.themeService = themeService;
         this.disciplineService = disciplineService;
         this.ratingSystemService = ratingSystemService;
+        this.examService = examService;
     }
 
     public ExamRuleBean findOne(Long id) {
@@ -38,7 +37,7 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
         return map(examRule);
     }
 
-    public ExamRuleBean createExamRule(CreateExamRuleBean bean) {
+    public ExamRuleBean createExamRule(ExamRuleBean bean) {
         Discipline discipline = disciplineService.findById(bean.getDisciplineId());
         if (discipline == null) {
             userError("No discipline with specified id");
@@ -71,6 +70,61 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
         examRule.setRatingSystem(ratingSystem);
 
         return map(save(examRule));
+    }
+
+    public ExamRuleBean updateExamRule(Long id, ExamRuleBean bean) {
+        ExamRule examRule = findById(id);
+        if (examRule == null) {
+            userError("Exam rule not found");
+        }
+
+        Discipline discipline = disciplineService.findById(bean.getDisciplineId());
+        if (discipline == null) {
+            userError("No discipline with specified id");
+        }
+        RatingSystem ratingSystem = ratingSystemService.findById(bean.getRatingSystemId());
+        if (ratingSystem == null) {
+            userError("No rating system with specified id");
+        }
+        List<Long> themeIds = bean.getThemeIds();
+        if (CollectionUtils.isEmpty(themeIds)) {
+            userError("Exam rule must have at least 1 theme");
+        }
+        List<Theme> themes = new ArrayList<>(themeIds.size());
+        for (Long themeId : themeIds) {
+            Theme theme = themeService.findById(themeId);
+            if (theme == null) {
+                userError("No theme with id " + themeId);
+            }
+            themes.add(theme);
+        }
+
+        examRule.setName(bean.getName());
+        examRule.setExerciseCount(bean.getExerciseCount());
+        examRule.setQuestionCount(bean.getQuestionCount());
+        examRule.setDuration(bean.getDuration());
+        examRule.setMinimalRating(bean.getMinimalRating());
+        examRule.setDiscipline(discipline);
+        examRule.setThemes(themes);
+        examRule.setRatingSystem(ratingSystem);
+
+        return map(save(examRule));
+    }
+
+    public void delete(Long id) {
+        ExamRule examRule = findById(id);
+        if (examRule == null) {
+            userError("Exam rule not found");
+        }
+        delete(examRule);
+    }
+
+    @Override
+    public void delete(ExamRule examRule) {
+        for (Exam exam : CollectionUtils.emptyIfNull(examRule.getExams())) {
+            examService.delete(exam);
+        }
+        super.delete(examRule);
     }
 
     public List<ExamRuleBean> findByDiscipline(Long disciplineId) {

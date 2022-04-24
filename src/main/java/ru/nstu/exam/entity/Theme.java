@@ -21,6 +21,9 @@ public class Theme extends PersistableEntity {
     @OneToMany(mappedBy = "theme")
     private List<Task> tasks;
 
+    @ManyToMany(mappedBy = "themes")
+    private List<ExamRule> examRules;
+
     @ManyToOne
     private Discipline discipline;
 }

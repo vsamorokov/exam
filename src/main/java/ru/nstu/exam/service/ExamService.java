@@ -1,6 +1,7 @@
 package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
+import liquibase.repackaged.org.apache.commons.collections4.SetUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,7 @@ import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.security.UserRole;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
@@ -166,27 +164,6 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(save(exam));
     }
 
-    public void deleteExam(Long examId, Account account) {
-        Exam exam = findById(examId);
-        if (exam == null) {
-            userError("Exam not found");
-        }
-        if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
-            userError("That teacher cannot do this");
-        }
-
-        List<ExamPeriod> periods = exam.getExamPeriods();
-        if (periods.stream().anyMatch(p -> ExamPeriodState.PROGRESS.equals(p.getState()))) {
-            userError("Exam in progress");
-        }
-        for (ExamPeriod examPeriod : periods) {
-            ticketService.deleteByPeriod(examPeriod);
-            examPeriod.setDeleted(true);
-            examPeriodRepository.save(examPeriod);
-        }
-        delete(exam);
-    }
-
     private void createPeriodInternal(Exam exam, Long start, ExamRule examRule) {
         ExamPeriod examPeriod = new ExamPeriod();
         examPeriod.setStart(toLocalDateTime(start));
@@ -261,7 +238,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             }
             return map(period);
         } else if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (!period.getState().isAfter(ExamPeriodState.ALLOWANCE) ||
+            if (period.getState().isBefore(ExamPeriodState.READY) ||
                     period.getTickets().stream()
                             .noneMatch(t -> t.getAllowed() && Objects.equals(t.getStudent().getAccount().getId(), account.getId()))) {
                 userError("Student not allowed to this exam");
@@ -351,6 +328,52 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
                 examPeriodRepository.save(inProgressPeriod);
             }
         }
+    }
+
+    public void deleteExam(Long examId, Account account) {
+        Exam exam = findById(examId);
+        if (exam == null) {
+            userError("Exam not found");
+        }
+        if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
+            userError("That teacher cannot do this");
+        }
+        delete(exam);
+    }
+
+    @Override
+    public void delete(Exam exam) {
+        Collection<ExamPeriod> examPeriods = CollectionUtils.emptyIfNull(exam.getExamPeriods());
+        for (ExamPeriod examPeriod : examPeriods) {
+            if (examPeriod.getState().in(SetUtils.hashSet(ExamPeriodState.PROGRESS, ExamPeriodState.FINISHED))) {
+                userError("Exam " + exam.getId() + " is in progress or finished");
+            }
+            if (!hasBackup(examPeriod)) {
+                userError("Exam period cannot be deleted as it doesn't have backup");
+            }
+        }
+        for (ExamPeriod examPeriod : examPeriods) {
+            deleteExamPeriod(examPeriod);
+        }
+        super.delete(exam);
+    }
+
+    public void deleteExamPeriod(Long examPeriodId) {
+        ExamPeriod period = examPeriodRepository.findById(examPeriodId).orElseGet(() -> userError("Exam period not found"));
+        deleteExamPeriod(period);
+    }
+
+    private void deleteExamPeriod(ExamPeriod examPeriod) {
+        if (!hasBackup(examPeriod)) {
+            userError("Exam period cannot be deleted as it doesn't have backup");
+        }
+        ticketService.deleteByPeriod(examPeriod);
+        examPeriod.setDeleted(true);
+        examPeriodRepository.save(examPeriod);
+    }
+
+    private boolean hasBackup(ExamPeriod examPeriod) {
+        return true; // TODO: 24.04.2022 Add implementation
     }
 
     @Override

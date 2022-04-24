@@ -8,11 +8,13 @@ import ru.nstu.exam.bean.FullThemeBean;
 import ru.nstu.exam.bean.TaskBean;
 import ru.nstu.exam.bean.ThemeBean;
 import ru.nstu.exam.entity.Discipline;
+import ru.nstu.exam.entity.ExamRule;
 import ru.nstu.exam.entity.Task;
 import ru.nstu.exam.entity.Theme;
 import ru.nstu.exam.repository.ThemeRepository;
 import ru.nstu.exam.service.mapper.FullThemeMapper;
 
+import java.util.Collection;
 import java.util.List;
 
 import static ru.nstu.exam.exception.ExamException.userError;
@@ -22,12 +24,14 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
 
     private final DisciplineService disciplineService;
     private final TaskService taskService;
+    private final ExamRuleService examRuleService;
     private final FullThemeMapper themeMapper;
 
-    public ThemeService(ThemeRepository repository, DisciplineService disciplineService, @Lazy TaskService taskService, FullThemeMapper themeMapper) {
+    public ThemeService(ThemeRepository repository, DisciplineService disciplineService, @Lazy TaskService taskService, @Lazy ExamRuleService examRuleService, FullThemeMapper themeMapper) {
         super(repository);
         this.disciplineService = disciplineService;
         this.taskService = taskService;
+        this.examRuleService = examRuleService;
         this.themeMapper = themeMapper;
     }
 
@@ -78,10 +82,19 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         if (theme == null) {
             userError("Theme not found");
         }
-        for (Task task : CollectionUtils.emptyIfNull(theme.getTasks())) {
-            taskService.delete(task.getId());
-        }
         delete(theme);
+    }
+
+    @Override
+    public void delete(Theme theme) {
+        Collection<ExamRule> examRules = CollectionUtils.emptyIfNull(theme.getExamRules());
+        for (ExamRule examRule : examRules) {
+            examRuleService.delete(examRule);
+        }
+        for (Task task : CollectionUtils.emptyIfNull(theme.getTasks())) {
+            taskService.delete(task);
+        }
+        super.delete(theme);
     }
 
     public List<TaskBean> findTasks(Long themeId) {

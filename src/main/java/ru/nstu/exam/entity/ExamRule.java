@@ -30,6 +30,9 @@ public class ExamRule extends PersistableEntity {
     @JoinColumn(name = "discipline_id")
     private Discipline discipline;
 
+    @OneToMany(mappedBy = "examRule")
+    private List<Exam> exams;
+
     @Column(name = "question_count")
     private Integer questionCount;
 

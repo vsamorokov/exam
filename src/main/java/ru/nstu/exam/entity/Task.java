@@ -6,6 +6,7 @@ import org.hibernate.annotations.Where;
 import ru.nstu.exam.enums.TaskType;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Entity
@@ -28,4 +29,7 @@ public class Task extends PersistableEntity {
     @ManyToOne
     @JoinColumn(name = "theme_id")
     private Theme theme;
+
+    @OneToMany(mappedBy = "task")
+    private List<Answer> answers;
 }

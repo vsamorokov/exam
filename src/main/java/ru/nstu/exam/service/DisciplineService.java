@@ -6,9 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.FullDisciplineBean;
 import ru.nstu.exam.bean.ThemeBean;
-import ru.nstu.exam.entity.Discipline;
-import ru.nstu.exam.entity.Teacher;
-import ru.nstu.exam.entity.Theme;
+import ru.nstu.exam.entity.*;
 import ru.nstu.exam.repository.DisciplineRepository;
 import ru.nstu.exam.service.mapper.FullDisciplineMapper;
 
@@ -21,11 +19,15 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
 
     private final FullDisciplineMapper disciplineMapper;
     private final ThemeService themeService;
+    private final ExamService examService;
+    private final ExamRuleService examRuleService;
 
-    public DisciplineService(DisciplineRepository repository, FullDisciplineMapper disciplineMapper, @Lazy ThemeService themeService) {
+    public DisciplineService(DisciplineRepository repository, FullDisciplineMapper disciplineMapper, @Lazy ThemeService themeService, @Lazy ExamService examService, @Lazy ExamRuleService examRuleService) {
         super(repository);
         this.disciplineMapper = disciplineMapper;
         this.themeService = themeService;
+        this.examService = examService;
+        this.examRuleService = examRuleService;
     }
 
     public FullDisciplineBean findOne(Long disciplineId, int level) {
@@ -54,9 +56,6 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
         if (discipline == null) {
             userError("Discipline not found");
         }
-        for (Theme theme : CollectionUtils.emptyIfNull(discipline.getThemes())) {
-            themeService.delete(theme.getId());
-        }
         delete(discipline);
     }
 
@@ -70,6 +69,20 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
             userError("Discipline not found");
         }
         return themeService.mapToBeans(discipline.getThemes());
+    }
+
+    @Override
+    public void delete(Discipline discipline) {
+        for (Theme theme : CollectionUtils.emptyIfNull(discipline.getThemes())) {
+            themeService.delete(theme);
+        }
+        for (Exam exam : CollectionUtils.emptyIfNull(discipline.getExams())) {
+            examService.delete(exam);
+        }
+        for (ExamRule examRule : CollectionUtils.emptyIfNull(discipline.getExamRules())) {
+            examRuleService.delete(examRule);
+        }
+        super.delete(discipline);
     }
 
     @Override

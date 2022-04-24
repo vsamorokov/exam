@@ -1,5 +1,6 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.StudentBean;
@@ -7,6 +8,7 @@ import ru.nstu.exam.bean.StudentTicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Student;
+import ru.nstu.exam.entity.Ticket;
 import ru.nstu.exam.repository.StudentRepository;
 import ru.nstu.exam.security.UserRole;
 
@@ -44,7 +46,7 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         if (group == null) {
             userError("No group with specified id");
         }
-        if(studentBean.getAccount() == null) {
+        if (studentBean.getAccount() == null) {
             userError("Student must have account");
         }
         if (!Collections.singleton(UserRole.ROLE_STUDENT).containsAll(studentBean.getAccount().getRoles())) {
@@ -57,6 +59,23 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         student.setAccount(account);
         student.setGroup(group);
         return map(save(student));
+    }
+
+    public void delete(Long id) {
+        Student student = findById(id);
+        if (student == null) {
+            userError("Student not found");
+        }
+        delete(student);
+    }
+
+    @Override
+    public void delete(Student student) {
+        for (Ticket ticket : CollectionUtils.emptyIfNull(student.getTickets())) {
+            ticketService.delete(ticket);
+        }
+        accountService.delete(student.getAccount());
+        super.delete(student);
     }
 
     public StudentBean findByAccount(Account account) {

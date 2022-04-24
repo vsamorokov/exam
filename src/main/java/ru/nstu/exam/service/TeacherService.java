@@ -13,6 +13,7 @@ import ru.nstu.exam.repository.TeacherRepository;
 import ru.nstu.exam.security.UserRole;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,10 +39,7 @@ public class TeacherService extends BasePersistentService<Teacher, TeacherBean, 
     }
 
     public TeacherBean createTeacher(CreateTeacherBean teacherBean) {
-        List<Long> disciplineIds = teacherBean.getDisciplineIds();
-        if (CollectionUtils.isEmpty(disciplineIds)) {
-            userError("Teacher must have disciplines");
-        }
+        Collection<Long> disciplineIds = CollectionUtils.emptyIfNull(teacherBean.getDisciplineIds());
         List<Discipline> disciplines = new ArrayList<>(disciplineIds.size());
         for (Long id : disciplineIds) {
             Discipline discipline = disciplineService.findById(id);

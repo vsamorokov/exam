@@ -7,6 +7,8 @@ import ru.nstu.exam.entity.Group;
 import java.util.List;
 
 @Repository
-public interface GroupRepository extends PersistableEntityRepository<Group>{
+public interface GroupRepository extends PersistableEntityRepository<Group> {
     List<Group> findAllByDisciplinesContaining(Discipline discipline);
+
+    Long findCountByName(String name);
 }

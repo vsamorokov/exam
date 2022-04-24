@@ -67,6 +67,14 @@ public class MessageService extends BasePersistentService<Message, MessageBean, 
     }
 
     @Override
+    public void delete(Message message) {
+        if (message.getArtefact() != null) {
+            artefactService.delete(message.getArtefact());
+        }
+        super.delete(message);
+    }
+
+    @Override
     protected MessageBean map(Message entity) {
         MessageBean messageBean = new MessageBean();
         messageBean.setId(entity.getId());

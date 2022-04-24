@@ -1,5 +1,7 @@
 package ru.nstu.exam.service;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.nstu.exam.bean.FullTaskBean;
@@ -23,13 +25,15 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
     private final TeacherService teacherService;
     private final ArtefactService artefactService;
     private final FullTaskMapper taskMapper;
+    private final AnswerService answerService;
 
-    public TaskService(TaskRepository repository, ThemeService themeService, TeacherService teacherService, ArtefactService artefactService, FullTaskMapper taskMapper) {
+    public TaskService(TaskRepository repository, ThemeService themeService, TeacherService teacherService, ArtefactService artefactService, FullTaskMapper taskMapper, @Lazy AnswerService answerService) {
         super(repository);
         this.themeService = themeService;
         this.teacherService = teacherService;
         this.artefactService = artefactService;
         this.taskMapper = taskMapper;
+        this.answerService = answerService;
     }
 
     public List<TaskBean> findAll(Account account) {
@@ -108,10 +112,18 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         if (task == null) {
             userError("Task not found");
         }
+        delete(task);
+    }
+
+    @Override
+    public void delete(Task task) {
+        for (Answer answer : CollectionUtils.emptyIfNull(task.getAnswers())) {
+            answerService.delete(answer);
+        }
         if (task.getArtefact() != null) {
             artefactService.delete(task.getArtefact());
         }
-        delete(task);
+        super.delete(task);
     }
 
     public List<Task> getQuestions(ExamRule examRule) {
