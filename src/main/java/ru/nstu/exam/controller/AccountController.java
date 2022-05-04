@@ -39,10 +39,17 @@ public class AccountController {
         return accountService.me(account);
     }
 
-    @PostMapping("/change-password")
-    @Operation(summary = "Change password")
-    public void changePassword(@RequestBody AccountBean accountBean, @UserAccount Account account) {
-        accountService.changePassword(accountBean, account);
+    @PutMapping
+    @Operation(summary = "Update sender's account")
+    public AccountBean updateMyAccount(@RequestBody AccountBean accountBean, @UserAccount Account account) {
+        return accountService.update(accountBean, account);
+    }
+
+    @IsAdmin
+    @PutMapping("/{accountId}")
+    @Operation(summary = "Update sender's account")
+    public AccountBean updateAccount(@PathVariable Long accountId, @RequestBody AccountBean accountBean) {
+        return accountService.update(accountId, accountBean);
     }
 
     @IsAdmin

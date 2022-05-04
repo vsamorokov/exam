@@ -28,10 +28,16 @@ public class DisciplineController {
         return disciplineService.findAll();
     }
 
+    @GetMapping("/{disciplineId}/full")
+    @Operation(summary = "Get one discipline")
+    public FullDisciplineBean getFull(@PathVariable Long disciplineId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
+        return disciplineService.findFull(disciplineId, level);
+    }
+
     @GetMapping("/{disciplineId}")
     @Operation(summary = "Get one discipline")
-    public FullDisciplineBean getOne(@PathVariable Long disciplineId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
-        return disciplineService.findOne(disciplineId, level);
+    public DisciplineBean getOne(@PathVariable Long disciplineId) {
+        return disciplineService.findOne(disciplineId);
     }
 
     @IsAdmin

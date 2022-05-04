@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.FullAnswerBean;
 import ru.nstu.exam.bean.MessageBean;
 import ru.nstu.exam.bean.NewMessageBean;
 import ru.nstu.exam.bean.UpdateAnswerBean;
@@ -48,5 +49,10 @@ public class AnswerController {
                      @UserAccount Account account
     ) {
         answerService.rate(answerId, answerBean, account);
+    }
+
+    @GetMapping("/{answerId}/full")
+    public FullAnswerBean getFull(@PathVariable Long answerId, @RequestParam(required = false, defaultValue = "0") int level) {
+        return answerService.findFull(answerId, level);
     }
 }

@@ -12,11 +12,14 @@ import ru.nstu.exam.enums.ExamPeriodState;
 import ru.nstu.exam.enums.TaskType;
 import ru.nstu.exam.repository.AnswerRepository;
 import ru.nstu.exam.security.UserRole;
+import ru.nstu.exam.service.mapper.FullAnswerMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
+import static ru.nstu.exam.utils.Utils.checkTrue;
 
 @Service
 public class AnswerService extends BasePersistentService<Answer, StudentAnswerBean, AnswerRepository> {
@@ -24,11 +27,19 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
 
     private final MessageService messageService;
     private final TeacherService teacherService;
+    private final FullAnswerMapper answerMapper;
 
-    public AnswerService(AnswerRepository repository, MessageService messageService, TeacherService teacherService) {
+    public AnswerService(AnswerRepository repository, MessageService messageService, TeacherService teacherService, FullAnswerMapper answerMapper) {
         super(repository);
         this.messageService = messageService;
         this.teacherService = teacherService;
+        this.answerMapper = answerMapper;
+    }
+
+    public FullAnswerBean findFull(Long answerId, int level) {
+        Answer answer = findById(answerId);
+        checkNotNull(answer, "Answer not found");
+        return answerMapper.map(answer, level);
     }
 
     public void generateAnswers(Ticket ticket, ExamRule examRule, List<Task> questions, List<Task> exercises) {
@@ -74,18 +85,14 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
 
     public Page<MessageBean> findAllMessages(Long answerId, Account account, Pageable pageable) {
         Answer answer = findById(answerId);
-        if (answer == null) {
-            userError("No answer found");
-        }
+        checkNotNull(answer, "No answer found");
         if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (!Objects.equals(account.getId(), answer.getTicket().getStudent().getAccount().getId())) {
-                userError("That student is not allowed to read there");
-            }
+            checkTrue(Objects.equals(account.getId(), answer.getTicket().getStudent().getAccount().getId()),
+                    "That student is not allowed to read there");
         }
         if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            if (!Objects.equals(account.getId(), answer.getTicket().getExamPeriod().getExam().getTeacher().getAccount().getId())) {
-                userError("That teacher is not allowed to read there");
-            }
+            checkTrue(Objects.equals(account.getId(), answer.getTicket().getExamPeriod().getExam().getTeacher().getAccount().getId()),
+                    "That teacher is not allowed to read there");
         }
 
         return messageService.findAllByAnswer(answer, pageable);

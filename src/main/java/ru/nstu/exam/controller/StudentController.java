@@ -9,6 +9,7 @@ import ru.nstu.exam.bean.StudentTicketBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsStudent;
+import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.StudentService;
 
@@ -49,4 +50,12 @@ public class StudentController {
     public List<StudentTicketBean> getTickets(@UserAccount Account account) {
         return studentService.getTickets(account);
     }
+
+    @IsTeacher
+    @GetMapping("/{studentId}")
+    @Operation(summary = "Get student by id")
+    public StudentBean getStudent(@PathVariable Long studentId) {
+        return studentService.findOne(studentId);
+    }
+
 }

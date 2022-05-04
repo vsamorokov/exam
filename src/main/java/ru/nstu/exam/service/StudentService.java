@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 
 @Service
 public class StudentService extends BasePersistentService<Student, StudentBean, StudentRepository> {
@@ -76,6 +77,12 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         }
         accountService.delete(student.getAccount());
         super.delete(student);
+    }
+
+    public StudentBean findOne(Long id) {
+        Student student = findById(id);
+        checkNotNull(student, "Student not found");
+        return map(student);
     }
 
     public StudentBean findByAccount(Account account) {

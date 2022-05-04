@@ -5,14 +5,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.ExamRuleBean;
+import ru.nstu.exam.bean.FullExamRuleBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.repository.ExamRuleRepository;
+import ru.nstu.exam.service.mapper.FullExamRuleMapper;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 
 @Service
 public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBean, ExamRuleRepository> {
@@ -20,13 +23,15 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
     private final DisciplineService disciplineService;
     private final RatingSystemService ratingSystemService;
     private final ExamService examService;
+    private final FullExamRuleMapper fullExamRuleMapper;
 
-    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, RatingSystemService ratingSystemService, @Lazy ExamService examService) {
+    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, RatingSystemService ratingSystemService, @Lazy ExamService examService, FullExamRuleMapper fullExamRuleMapper) {
         super(repository);
         this.themeService = themeService;
         this.disciplineService = disciplineService;
         this.ratingSystemService = ratingSystemService;
         this.examService = examService;
+        this.fullExamRuleMapper = fullExamRuleMapper;
     }
 
     public ExamRuleBean findOne(Long id) {
@@ -35,6 +40,12 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
             userError("Exam rule not found");
         }
         return map(examRule);
+    }
+
+    public FullExamRuleBean findFull(Long id, int level) {
+        ExamRule examRule = findById(id);
+        checkNotNull(examRule, "Exam rule not found");
+        return fullExamRuleMapper.map(examRule, level);
     }
 
     public ExamRuleBean createExamRule(ExamRuleBean bean) {

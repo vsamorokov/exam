@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 public class ArtefactController {
     private final ArtefactService artefactService;
 
-
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload a file")
     public ArtefactBean uploadFile(@RequestParam("file") MultipartFile file) {

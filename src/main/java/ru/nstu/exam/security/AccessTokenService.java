@@ -1,7 +1,10 @@
 package ru.nstu.exam.security;
 
+import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.entity.AccessToken;
@@ -13,7 +16,9 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccessTokenService {
@@ -68,10 +73,21 @@ public class AccessTokenService {
 
     public AccessToken refreshToken(Long tokenId) {
         AccessToken accessToken = tokenRepository.findById(tokenId).orElse(null);
-        if(accessToken == null) {
+        if (accessToken == null) {
             return null;
         }
         accessToken.setIssueTime(LocalDateTime.now(UTC));
         return tokenRepository.save(accessToken);
+    }
+
+    @Scheduled(fixedDelay = 60000L)
+    void deleteExpired() {
+        LocalDateTime expired = LocalDateTime.now(UTC).minusMinutes(tokenExpiration);
+        List<AccessToken> tokens = tokenRepository.findAllByIssueTimeBefore(expired);
+        if (CollectionUtils.isEmpty(tokens)) {
+            return;
+        }
+        tokens.forEach(tokenRepository::delete);
+        log.info("{} expired tokens deleted", tokens.size());
     }
 }

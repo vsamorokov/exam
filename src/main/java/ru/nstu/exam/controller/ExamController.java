@@ -35,6 +35,12 @@ public class ExamController {
         return examService.findOne(examId);
     }
 
+    @GetMapping("/exams/{examId}/full")
+    @Operation(summary = "Get full exam by id")
+    public FullExamBean getFull(@PathVariable Long examId, @RequestParam(required = false, defaultValue = "0") int level) {
+        return examService.findFull(examId, level);
+    }
+
     @IsTeacher
     @PostMapping("/exams")
     @Operation(summary = "Create an exam")
@@ -73,10 +79,26 @@ public class ExamController {
         return examService.findPeriods(examId);
     }
 
+    @IsTeacher
+    @GetMapping("/exams/{examId}/last-period")
+    @Operation(summary = "Get last period by exam")
+    public ExamPeriodBean getLastPeriod(@PathVariable Long examId) {
+        return examService.findLastPeriod(examId);
+    }
+
     @GetMapping("/periods/{periodId}")
     @Operation(summary = "Get exam period")
     public ExamPeriodBean getPeriod(@PathVariable Long periodId, @UserAccount Account account) {
         return examService.getPeriod(periodId, account);
+    }
+
+    @GetMapping("/periods/{periodId}/full")
+    @Operation(summary = "Get full exam period by id")
+    public FullExamPeriodBean getFullPeriod(
+            @PathVariable Long periodId,
+            @RequestParam(required = false, defaultValue = "0") int level
+    ) {
+        return examService.findFullPeriod(periodId, level);
     }
 
     @IsTeacher

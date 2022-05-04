@@ -87,7 +87,10 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         task.setText(taskBean.getText());
         task.setTaskType(taskBean.getTaskType());
 
-        if (!Objects.equals(task.getTheme().getId(), taskBean.getThemeId())) {
+        if (!Objects.equals(
+                task.getTheme() == null ? null : task.getTheme().getId(),
+                taskBean.getThemeId()
+        )) {
             Theme theme = themeService.findById(taskBean.getThemeId());
             if (theme == null) {
                 userError("No theme with specified id");
@@ -96,7 +99,9 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         }
 
         Long artefactId = task.getArtefact() == null ? null : task.getArtefact().getId();
-        if (!Objects.equals(artefactId, taskBean.getArtefactId())) {
+        if (taskBean.getArtefactId() == null) {
+            task.setArtefact(null);
+        } else if (!Objects.equals(artefactId, taskBean.getArtefactId())) {
             Artefact artefact = artefactService.getArtefact(taskBean.getArtefactId());
             if (artefact == null) {
                 userError("Artefact not found");

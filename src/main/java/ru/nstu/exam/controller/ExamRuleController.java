@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.ExamRuleBean;
+import ru.nstu.exam.bean.FullExamRuleBean;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.ExamRuleService;
 
@@ -30,6 +31,12 @@ public class ExamRuleController {
     @Operation(summary = "Get one exam rule")
     public ExamRuleBean getOne(@PathVariable Long id) {
         return examRuleService.findOne(id);
+    }
+
+    @GetMapping("/{id}/full")
+    @Operation(summary = "Get full exam rule")
+    public FullExamRuleBean getFull(@PathVariable Long id, @RequestParam(required = false, defaultValue = "0") int level) {
+        return examRuleService.findFull(id, level);
     }
 
     @IsTeacher

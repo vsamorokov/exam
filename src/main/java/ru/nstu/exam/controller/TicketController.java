@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import ru.nstu.exam.bean.FullTicketBean;
 import ru.nstu.exam.bean.StudentAnswerBean;
 import ru.nstu.exam.bean.UpdateTicketBean;
 import ru.nstu.exam.security.IsStudent;
@@ -40,4 +41,12 @@ public class TicketController {
     ) {
         return ticketService.getAnswers(ticketId, pageable);
     }
+
+    @GetMapping("/{ticketId}/full")
+    @Operation(summary = "Get full ticket")
+    public FullTicketBean getFull(@PathVariable Long ticketId, @RequestParam(required = false, defaultValue = "0") int level) {
+        return ticketService.findFull(ticketId, level);
+    }
+
+
 }

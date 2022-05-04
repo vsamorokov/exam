@@ -9,6 +9,7 @@ import ru.nstu.exam.entity.utils.RatingMapping;
 import ru.nstu.exam.enums.ExamPeriodState;
 import ru.nstu.exam.enums.TaskType;
 import ru.nstu.exam.repository.TicketRepository;
+import ru.nstu.exam.service.mapper.FullTicketMapper;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 import static ru.nstu.exam.utils.Utils.toMillis;
 
 @Service
@@ -24,12 +26,20 @@ public class TicketService extends BasePersistentService<Ticket, TicketBean, Tic
     private final AnswerService answerService;
     private final TaskService taskService;
     private final TeacherService teacherService;
+    private final FullTicketMapper ticketMapper;
 
-    public TicketService(TicketRepository repository, AnswerService answerService, TaskService taskService, TeacherService teacherService) {
+    public TicketService(TicketRepository repository, AnswerService answerService, TaskService taskService, TeacherService teacherService, FullTicketMapper ticketMapper) {
         super(repository);
         this.answerService = answerService;
         this.taskService = taskService;
         this.teacherService = teacherService;
+        this.ticketMapper = ticketMapper;
+    }
+
+    public FullTicketBean findFull(Long ticketId, int level) {
+        Ticket ticket = findById(ticketId);
+        checkNotNull(ticket, "Ticket not found");
+        return ticketMapper.map(ticket, level);
     }
 
     public List<TicketBean> findByPeriod(ExamPeriod period) {

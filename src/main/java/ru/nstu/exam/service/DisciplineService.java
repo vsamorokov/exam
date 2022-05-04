@@ -13,6 +13,7 @@ import ru.nstu.exam.service.mapper.FullDisciplineMapper;
 import java.util.List;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 
 @Service
 public class DisciplineService extends BasePersistentService<Discipline, DisciplineBean, DisciplineRepository> {
@@ -30,12 +31,21 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
         this.examRuleService = examRuleService;
     }
 
-    public FullDisciplineBean findOne(Long disciplineId, int level) {
+    public FullDisciplineBean findFull(Long disciplineId, int level) {
         Discipline discipline = findById(disciplineId);
         if (discipline == null) {
             userError("Discipline not found");
         }
         return disciplineMapper.map(discipline, level);
+    }
+
+    public DisciplineBean findOne(Long disciplineId) {
+        Discipline discipline = findById(disciplineId);
+        checkNotNull(discipline, "Discipline not found");
+        if (discipline == null) {
+            userError("Discipline not found");
+        }
+        return map(discipline);
     }
 
     public DisciplineBean createDiscipline(DisciplineBean disciplineBean) {

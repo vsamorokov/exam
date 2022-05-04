@@ -12,6 +12,8 @@ import ru.nstu.exam.exception.ExamException;
 import ru.nstu.exam.repository.ExamPeriodRepository;
 import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.security.UserRole;
+import ru.nstu.exam.service.mapper.FullExamMapper;
+import ru.nstu.exam.service.mapper.FullExamPeriodMapper;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -20,8 +22,7 @@ import java.util.stream.Collectors;
 import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.serverError;
 import static ru.nstu.exam.exception.ExamException.userError;
-import static ru.nstu.exam.utils.Utils.toLocalDateTime;
-import static ru.nstu.exam.utils.Utils.toMillis;
+import static ru.nstu.exam.utils.Utils.*;
 
 @Service
 public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepository> {
@@ -32,8 +33,10 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     private final TicketService ticketService;
     private final ExamPeriodRepository examPeriodRepository;
     private final MessageService messageService;
+    private final FullExamMapper fullExamMapper;
+    private final FullExamPeriodMapper fullExamPeriodMapper;
 
-    public ExamService(ExamRepository repository, ExamRuleService examRuleService, TeacherService teacherService, GroupService groupService, DisciplineService disciplineService, TicketService ticketService, ExamPeriodRepository examPeriodRepository, MessageService messageService) {
+    public ExamService(ExamRepository repository, ExamRuleService examRuleService, TeacherService teacherService, GroupService groupService, DisciplineService disciplineService, TicketService ticketService, ExamPeriodRepository examPeriodRepository, MessageService messageService, FullExamMapper fullExamMapper, FullExamPeriodMapper fullExamPeriodMapper) {
         super(repository);
         this.examRuleService = examRuleService;
         this.teacherService = teacherService;
@@ -42,6 +45,8 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         this.ticketService = ticketService;
         this.examPeriodRepository = examPeriodRepository;
         this.messageService = messageService;
+        this.fullExamMapper = fullExamMapper;
+        this.fullExamPeriodMapper = fullExamPeriodMapper;
     }
 
     public List<ExamBean> findAll(Account account) {
@@ -52,11 +57,15 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return mapToBeans(getRepository().findAllByTeacher(teacher));
     }
 
+    public FullExamBean findFull(Long examId, int level) {
+        Exam exam = findById(examId);
+        checkNotNull(exam, "Exam not found");
+        return fullExamMapper.map(exam);
+    }
+
     public ExamBean findOne(Long examId) {
         Exam exam = findById(examId);
-        if (exam == null) {
-            userError("Exam not found");
-        }
+        checkNotNull(exam, "Exam not found");
         return map(exam);
     }
 
@@ -222,20 +231,16 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
     public List<TicketBean> findUnPassed(Long examId) {
         Exam exam = findById(examId);
-        if (exam == null) {
-            userError("No exam found");
-        }
+        checkNotNull(exam, "No exam found");
         return ticketService.getUnPassed(exam);
     }
-
 
     public ExamPeriodBean getPeriod(Long periodId, Account account) {
         ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("Period not found"));
 
         if (account.getRoles().contains(UserRole.ROLE_ADMIN)) {
-            if (!Objects.equals(period.getExam().getTeacher().getAccount().getId(), account.getId())) {
-                userError("Teacher not allowed to this exam");
-            }
+            checkTrue(Objects.equals(period.getExam().getTeacher().getAccount().getId(), account.getId()),
+                    "Teacher not allowed to this exam");
             return map(period);
         } else if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
             if (period.getState().isBefore(ExamPeriodState.READY) ||
@@ -248,11 +253,25 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return userError("Not allowed to this exam");
     }
 
+
+    public FullExamPeriodBean findFullPeriod(Long periodId, int level) {
+        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("Period not found"));
+        return fullExamPeriodMapper.map(period, level);
+    }
+
+    public ExamPeriodBean findLastPeriod(Long examId) {
+        Exam exam = findById(examId);
+        checkNotNull(exam, "Exam not found");
+        List<ExamPeriod> examPeriods = exam.getExamPeriods();
+        return CollectionUtils.emptyIfNull(examPeriods).stream()
+                .max(Comparator.comparing(ExamPeriod::getStart))
+                .map(this::map)
+                .orElse(null);
+    }
+
     public List<ExamPeriodBean> findPeriods(Long examId) {
         Exam exam = findById(examId);
-        if (exam == null) {
-            userError("No exam found");
-        }
+        checkNotNull(exam, "Exam not found");
         List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
         List<ExamPeriodBean> beans = new ArrayList<>(periods.size());
         for (ExamPeriod examPeriod : periods) {
@@ -289,9 +308,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
     public MessageBean newMessage(Long periodId, NewMessageBean messageBean, Account account) {
         ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        if (!ExamPeriodState.PROGRESS.equals(examPeriod.getState())) {
-            userError("Wrong state");
-        }
+        checkTrue(ExamPeriodState.PROGRESS.equals(examPeriod.getState()), "Wrong state");
         if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
             if (examPeriod.getTickets().stream()
                     .noneMatch(t ->
@@ -332,12 +349,9 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
     public void deleteExam(Long examId, Account account) {
         Exam exam = findById(examId);
-        if (exam == null) {
-            userError("Exam not found");
-        }
-        if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
-            userError("That teacher cannot do this");
-        }
+        checkNotNull(exam, "Exam not found");
+        checkTrue(Objects.equals(exam.getTeacher().getAccount().getId(), account.getId()),
+                "That teacher cannot do this");
         delete(exam);
     }
 
@@ -348,9 +362,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             if (examPeriod.getState().in(SetUtils.hashSet(ExamPeriodState.PROGRESS, ExamPeriodState.FINISHED))) {
                 userError("Exam " + exam.getId() + " is in progress or finished");
             }
-            if (!hasBackup(examPeriod)) {
-                userError("Exam period cannot be deleted as it doesn't have backup");
-            }
+            checkTrue(hasBackup(examPeriod), "Exam period cannot be deleted as it doesn't have backup");
         }
         for (ExamPeriod examPeriod : examPeriods) {
             deleteExamPeriod(examPeriod);
@@ -364,9 +376,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     }
 
     private void deleteExamPeriod(ExamPeriod examPeriod) {
-        if (!hasBackup(examPeriod)) {
-            userError("Exam period cannot be deleted as it doesn't have backup");
-        }
+        checkTrue(hasBackup(examPeriod), "Exam period cannot be deleted as it doesn't have backup");
         ticketService.deleteByPeriod(examPeriod);
         examPeriod.setDeleted(true);
         examPeriodRepository.save(examPeriod);
