@@ -3,9 +3,9 @@ package ru.nstu.exam.service.mapper;
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.nstu.exam.bean.FullTaskBean;
-import ru.nstu.exam.bean.FullThemeBean;
 import ru.nstu.exam.bean.ThemeBean;
+import ru.nstu.exam.bean.full.FullTaskBean;
+import ru.nstu.exam.bean.full.FullThemeBean;
 import ru.nstu.exam.entity.Theme;
 
 import java.util.List;

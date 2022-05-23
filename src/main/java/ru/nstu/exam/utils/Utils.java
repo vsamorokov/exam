@@ -13,7 +13,7 @@ import static ru.nstu.exam.exception.ExamException.userError;
 public class Utils {
 
     public static long toMillis(LocalDateTime localDateTime) {
-        return localDateTime.toInstant(UTC).toEpochMilli();
+        return localDateTime == null ? 0 : localDateTime.toInstant(UTC).toEpochMilli();
     }
 
     public static LocalDateTime toLocalDateTime(long timestamp) {

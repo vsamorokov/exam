@@ -4,6 +4,7 @@ package ru.nstu.exam.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
+import ru.nstu.exam.enums.StudentStatus;
 
 import javax.persistence.*;
 import java.util.List;
@@ -24,5 +25,9 @@ public class Student extends PersistableEntity {
     private Group group;
 
     @OneToMany(mappedBy = "student")
-    private List<Ticket> tickets;
+    private List<StudentRating> studentRatings;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private StudentStatus status;
 }

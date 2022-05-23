@@ -54,8 +54,8 @@ public class AccountService extends BasePersistentService<Account, AccountBean, 
         return map(save(account));
     }
 
-    public AccountBean update(Long accountId, AccountBean bean) {
-        Account account = findById(accountId);
+    public AccountBean update(AccountBean bean) {
+        Account account = findById(bean.getId());
         checkNotNull(account, "Account not found");
         checkUsername(bean.getUsername());
         checkPassword(bean.getPassword());
@@ -69,7 +69,7 @@ public class AccountService extends BasePersistentService<Account, AccountBean, 
     }
 
     private void checkPassword(String password) {
-        checkNotEmpty(password, "Password must not be null or empty");
+        checkNotNull(password, "Password must not be null");
     }
 
     private void checkUsername(String username) {

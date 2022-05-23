@@ -13,10 +13,7 @@ import java.util.List;
 @Table(name = "theme")
 @EqualsAndHashCode(callSuper = true)
 @Where(clause = "deleted = false")
-public class Theme extends PersistableEntity {
-
-    @Column(name = "name")
-    private String name;
+public class Theme extends NamedEntity {
 
     @OneToMany(mappedBy = "theme")
     private List<Task> tasks;
@@ -25,5 +22,6 @@ public class Theme extends PersistableEntity {
     private List<ExamRule> examRules;
 
     @ManyToOne
+    @JoinColumn(name = "discipline_id")
     private Discipline discipline;
 }

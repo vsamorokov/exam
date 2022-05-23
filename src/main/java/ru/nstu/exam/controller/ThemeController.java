@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.FullThemeBean;
 import ru.nstu.exam.bean.TaskBean;
 import ru.nstu.exam.bean.ThemeBean;
+import ru.nstu.exam.bean.full.FullThemeBean;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.ThemeService;
 
@@ -40,10 +40,10 @@ public class ThemeController {
     }
 
     @IsTeacher
-    @PutMapping("/{themeId}")
+    @PutMapping
     @Operation(summary = "Update a theme")
-    public ThemeBean update(@PathVariable Long themeId, @RequestBody ThemeBean themeBean) {
-        return themeService.updateTheme(themeId, themeBean);
+    public ThemeBean update(@RequestBody ThemeBean themeBean) {
+        return themeService.updateTheme(themeBean);
     }
 
     @IsTeacher

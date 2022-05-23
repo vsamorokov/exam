@@ -3,10 +3,9 @@ package ru.nstu.exam.service;
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import ru.nstu.exam.bean.FullThemeBean;
 import ru.nstu.exam.bean.TaskBean;
 import ru.nstu.exam.bean.ThemeBean;
+import ru.nstu.exam.bean.full.FullThemeBean;
 import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.ExamRule;
 import ru.nstu.exam.entity.Task;
@@ -18,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotEmpty;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 
 @Service
 public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeRepository> {
@@ -44,14 +45,9 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
     }
 
     public ThemeBean createTheme(ThemeBean themeBean) {
-
         Discipline discipline = disciplineService.findById(themeBean.getDisciplineId());
-        if (discipline == null) {
-            userError("Discipline with specified id cannot be found");
-        }
-        if (!StringUtils.hasText(themeBean.getName())) {
-            userError("Theme must have name");
-        }
+        checkNotNull(discipline, "Discipline with id" + themeBean.getDisciplineId() + " not be found");
+        checkNotEmpty(themeBean.getName(), "Theme must have name");
 
         Theme theme = map(themeBean);
         theme.setDiscipline(discipline);
@@ -59,19 +55,14 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         return map(save(theme));
     }
 
-    public ThemeBean updateTheme(Long themeId, ThemeBean themeBean) {
-        Theme theme = findById(themeId);
-        if (theme == null) {
-            userError("Theme not found");
-        }
+    public ThemeBean updateTheme(ThemeBean themeBean) {
+        Theme theme = findById(themeBean.getId());
+        checkNotNull(theme, String.format("Theme with id %s not found", themeBean.getId()));
 
         Discipline discipline = disciplineService.findById(themeBean.getDisciplineId());
-        if (discipline == null) {
-            userError("Discipline with specified id cannot be found");
-        }
-        if (!StringUtils.hasText(themeBean.getName())) {
-            userError("Theme must have name");
-        }
+        checkNotNull(discipline, "Discipline with id" + themeBean.getDisciplineId() + " not be found");
+        checkNotEmpty(themeBean.getName(), "Theme must have name");
+
         theme.setName(themeBean.getName());
         theme.setDiscipline(discipline);
         return map(save(theme));
@@ -79,9 +70,8 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
 
     public void delete(Long id) {
         Theme theme = findById(id);
-        if (theme == null) {
-            userError("Theme not found");
-        }
+        checkNotNull(theme, "Theme not found");
+
         delete(theme);
     }
 
@@ -99,9 +89,8 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
 
     public List<TaskBean> findTasks(Long themeId) {
         Theme theme = findById(themeId);
-        if (theme == null) {
-            userError("Theme not found");
-        }
+        checkNotNull(theme, "Theme not found");
+
         return taskService.mapToBeans(theme.getTasks());
     }
 

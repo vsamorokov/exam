@@ -5,50 +5,46 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.nstu.exam.bean.MessageBean;
-import ru.nstu.exam.bean.NewMessageBean;
-import ru.nstu.exam.entity.*;
+import ru.nstu.exam.entity.Account;
+import ru.nstu.exam.entity.Answer;
+import ru.nstu.exam.entity.Artefact;
+import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.repository.MessageRepository;
+import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
 import static ru.nstu.exam.utils.Utils.toMillis;
 
 @Service
 public class MessageService extends BasePersistentService<Message, MessageBean, MessageRepository> {
 
     private final ArtefactService artefactService;
+    private final NotificationService notificationService;
 
-    public MessageService(MessageRepository repository, ArtefactService artefactService) {
+    public MessageService(MessageRepository repository, ArtefactService artefactService, NotificationService notificationService) {
         super(repository);
         this.artefactService = artefactService;
+        this.notificationService = notificationService;
     }
 
     public Page<MessageBean> findAllByAnswer(Answer answer, Pageable pageable) {
         return getRepository().findAllByAnswer(answer, pageable).map(this::map);
     }
 
-    public Page<MessageBean> findAllByExamPeriod(ExamPeriod examPeriod, Pageable pageable) {
-        return getRepository().findAllByExamPeriodAndAnswerIsNull(examPeriod, pageable).map(this::map);
-    }
-
-    public MessageBean createAnswerMessage(NewMessageBean messageBean, Answer answer, Account account) {
+    public MessageBean createAnswerMessage(MessageBean messageBean, Answer answer, Account account) {
         Message message = checkNewMessage(messageBean);
         message.setAnswer(answer);
         message.setAccount(account);
-        return map(save(message));
+        Message saved = save(message);
+        notificationService.newMessage(saved);
+        return map(saved);
     }
 
-    public MessageBean createExamPeriodMessage(NewMessageBean messageBean, ExamPeriod examPeriod, Account account) {
-        Message message = checkNewMessage(messageBean);
-
-        message.setExamPeriod(examPeriod);
-        message.setAccount(account);
-        return map(save(message));
-    }
-
-    private Message checkNewMessage(NewMessageBean messageBean) {
+    private Message checkNewMessage(MessageBean messageBean) {
         if (messageBean.getArtefactId() == null && !StringUtils.hasText(messageBean.getText())) {
             userError("Empty message");
         }
@@ -56,9 +52,7 @@ public class MessageService extends BasePersistentService<Message, MessageBean, 
         Message message = new Message();
         if (messageBean.getArtefactId() != null) {
             Artefact artefact = artefactService.getArtefact(messageBean.getArtefactId());
-            if (artefact == null) {
-                userError("Artefact not found");
-            }
+            checkNotNull(artefact, "Artefact not found");
             message.setArtefact(artefact);
         }
         message.setText(messageBean.getText());

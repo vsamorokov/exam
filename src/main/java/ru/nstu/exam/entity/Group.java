@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.List;
 
 @Data
@@ -12,21 +14,14 @@ import java.util.List;
 @Table(name = "\"group\"")
 @EqualsAndHashCode(callSuper = true)
 @Where(clause = "deleted = false")
-public class Group extends PersistableEntity {
-
-    @Column(name = "name")
-    private String name;
+public class Group extends NamedEntity {
 
     @OneToMany(mappedBy = "group")
     private List<Student> students;
 
-    @ManyToMany(mappedBy = "groups")
+    @OneToMany(mappedBy = "group")
     private List<Exam> exams;
 
-    @ManyToMany
-    @JoinTable(name="group_discipline",
-            joinColumns = @JoinColumn(name="group_id"),
-            inverseJoinColumns = @JoinColumn(name="discipline_id")
-    )
-    private List<Discipline> disciplines;
+    @OneToMany(mappedBy = "group")
+    private List<GroupRating> groupRatings;
 }

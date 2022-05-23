@@ -25,3 +25,6 @@ springdoc:
 file:
   local-dir: /opt/exam/data/files
   max-size-bytes: 41943040 # 40MB
+
+exam-period:
+  auto-update-enabled: true

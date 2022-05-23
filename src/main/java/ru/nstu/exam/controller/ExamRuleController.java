@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.FullExamRuleBean;
+import ru.nstu.exam.bean.full.FullExamRuleBean;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.ExamRuleService;
 
@@ -47,9 +47,9 @@ public class ExamRuleController {
     }
 
     @IsTeacher
-    @PutMapping("/{id}")
+    @PutMapping
     @Operation(summary = "Update an exam rule")
-    public ExamRuleBean update(@PathVariable Long id, @RequestBody ExamRuleBean examRuleBean) {
-        return examRuleService.updateExamRule(id, examRuleBean);
+    public ExamRuleBean update(@RequestBody ExamRuleBean examRuleBean) {
+        return examRuleService.updateExamRule(examRuleBean);
     }
 }

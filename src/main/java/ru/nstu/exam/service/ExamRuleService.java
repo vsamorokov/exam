@@ -5,8 +5,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.FullExamRuleBean;
-import ru.nstu.exam.entity.*;
+import ru.nstu.exam.bean.full.FullExamRuleBean;
+import ru.nstu.exam.entity.Discipline;
+import ru.nstu.exam.entity.ExamRule;
+import ru.nstu.exam.entity.GroupRating;
+import ru.nstu.exam.entity.Theme;
 import ru.nstu.exam.repository.ExamRuleRepository;
 import ru.nstu.exam.service.mapper.FullExamRuleMapper;
 
@@ -21,17 +24,15 @@ import static ru.nstu.exam.utils.Utils.checkNotNull;
 public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBean, ExamRuleRepository> {
     private final ThemeService themeService;
     private final DisciplineService disciplineService;
-    private final RatingSystemService ratingSystemService;
-    private final ExamService examService;
     private final FullExamRuleMapper fullExamRuleMapper;
+    private final GroupRatingService groupRatingService;
 
-    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, RatingSystemService ratingSystemService, @Lazy ExamService examService, FullExamRuleMapper fullExamRuleMapper) {
+    public ExamRuleService(ExamRuleRepository repository, ThemeService themeService, DisciplineService disciplineService, FullExamRuleMapper fullExamRuleMapper, @Lazy GroupRatingService groupRatingService) {
         super(repository);
         this.themeService = themeService;
         this.disciplineService = disciplineService;
-        this.ratingSystemService = ratingSystemService;
-        this.examService = examService;
         this.fullExamRuleMapper = fullExamRuleMapper;
+        this.groupRatingService = groupRatingService;
     }
 
     public ExamRuleBean findOne(Long id) {
@@ -49,100 +50,61 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
     }
 
     public ExamRuleBean createExamRule(ExamRuleBean bean) {
-        Discipline discipline = disciplineService.findById(bean.getDisciplineId());
-        if (discipline == null) {
-            userError("No discipline with specified id");
-        }
-        RatingSystem ratingSystem = ratingSystemService.findById(bean.getRatingSystemId());
-        if (ratingSystem == null) {
-            userError("No rating system with specified id");
-        }
-        List<Long> themeIds = bean.getThemeIds();
-        if (CollectionUtils.isEmpty(themeIds)) {
-            userError("Exam rule must have at least 1 theme");
-        }
-        List<Theme> themes = new ArrayList<>(themeIds.size());
-        for (Long themeId : themeIds) {
-            Theme theme = themeService.findById(themeId);
-            if (theme == null) {
-                userError("No theme with id " + themeId);
-            }
-            themes.add(theme);
-        }
-
         ExamRule examRule = new ExamRule();
-        examRule.setName(bean.getName());
-        examRule.setExerciseCount(bean.getExerciseCount());
-        examRule.setQuestionCount(bean.getQuestionCount());
-        examRule.setDuration(bean.getDuration());
-        examRule.setMinimalRating(bean.getMinimalRating());
-        examRule.setDiscipline(discipline);
-        examRule.setThemes(themes);
-        examRule.setRatingSystem(ratingSystem);
-
+        fillExamRule(examRule, bean);
         return map(save(examRule));
     }
 
-    public ExamRuleBean updateExamRule(Long id, ExamRuleBean bean) {
-        ExamRule examRule = findById(id);
-        if (examRule == null) {
-            userError("Exam rule not found");
-        }
+    public ExamRuleBean updateExamRule(ExamRuleBean bean) {
+        ExamRule examRule = findById(bean.getId());
+        checkNotNull(examRule, "Exam rule not found");
+        fillExamRule(examRule, bean);
+        return map(save(examRule));
+    }
+
+    private void fillExamRule(ExamRule examRule, ExamRuleBean bean) {
 
         Discipline discipline = disciplineService.findById(bean.getDisciplineId());
-        if (discipline == null) {
-            userError("No discipline with specified id");
-        }
-        RatingSystem ratingSystem = ratingSystemService.findById(bean.getRatingSystemId());
-        if (ratingSystem == null) {
-            userError("No rating system with specified id");
-        }
+        checkNotNull(discipline, String.format("Discipline with id %s not found", bean.getDisciplineId()));
+
         List<Long> themeIds = bean.getThemeIds();
-        if (CollectionUtils.isEmpty(themeIds)) {
-            userError("Exam rule must have at least 1 theme");
-        }
         List<Theme> themes = new ArrayList<>(themeIds.size());
         for (Long themeId : themeIds) {
             Theme theme = themeService.findById(themeId);
-            if (theme == null) {
-                userError("No theme with id " + themeId);
-            }
+            checkNotNull(theme, String.format("Theme with id %s not found", themeId));
             themes.add(theme);
         }
 
         examRule.setName(bean.getName());
-        examRule.setExerciseCount(bean.getExerciseCount());
-        examRule.setQuestionCount(bean.getQuestionCount());
+        examRule.setMaximumExamRating(bean.getMaximumExamRating());
+        examRule.setMinimalExamRating(bean.getMinimalExamRating());
         examRule.setDuration(bean.getDuration());
-        examRule.setMinimalRating(bean.getMinimalRating());
+        examRule.setMinimalSemesterRating(bean.getMinimalSemesterRating());
+        examRule.setExercisesRatingSum(bean.getExercisesRatingSum());
+        examRule.setQuestionsRatingSum(bean.getQuestionsRatingSum());
+        examRule.setSingleExerciseDefaultRating(bean.getSingleExerciseDefaultRating());
+        examRule.setSingleQuestionDefaultRating(bean.getSingleQuestionDefaultRating());
         examRule.setDiscipline(discipline);
         examRule.setThemes(themes);
-        examRule.setRatingSystem(ratingSystem);
-
-        return map(save(examRule));
     }
 
     public void delete(Long id) {
         ExamRule examRule = findById(id);
-        if (examRule == null) {
-            userError("Exam rule not found");
-        }
+        checkNotNull(examRule, "Exam rule not found");
         delete(examRule);
     }
 
     @Override
     public void delete(ExamRule examRule) {
-        for (Exam exam : CollectionUtils.emptyIfNull(examRule.getExams())) {
-            examService.delete(exam);
+        for (GroupRating groupRating : CollectionUtils.emptyIfNull(examRule.getGroupRatings())) {
+            groupRatingService.delete(groupRating);
         }
         super.delete(examRule);
     }
 
     public List<ExamRuleBean> findByDiscipline(Long disciplineId) {
-        if (disciplineId == null) {
-            return null;
-        }
-        Discipline discipline = disciplineService.getById(disciplineId);
+        Discipline discipline = disciplineService.findById(disciplineId);
+        checkNotNull(discipline, "Discipline not found");
         List<ExamRule> examRule = getRepository().findAllByDiscipline(discipline);
         return mapToBeans(examRule);
     }
@@ -152,10 +114,14 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
         ExamRuleBean examRuleBean = new ExamRuleBean();
         examRuleBean.setId(entity.getId());
         examRuleBean.setName(entity.getName());
+        examRuleBean.setMaximumExamRating(entity.getMaximumExamRating());
+        examRuleBean.setMinimalExamRating(entity.getMinimalExamRating());
         examRuleBean.setDuration(entity.getDuration());
-        examRuleBean.setExerciseCount(entity.getExerciseCount());
-        examRuleBean.setQuestionCount(entity.getQuestionCount());
-        examRuleBean.setMinimalRating(entity.getMinimalRating());
+        examRuleBean.setMinimalSemesterRating(entity.getMinimalSemesterRating());
+        examRuleBean.setExercisesRatingSum(entity.getExercisesRatingSum());
+        examRuleBean.setQuestionsRatingSum(entity.getQuestionsRatingSum());
+        examRuleBean.setSingleExerciseDefaultRating(entity.getSingleExerciseDefaultRating());
+        examRuleBean.setSingleQuestionDefaultRating(entity.getSingleQuestionDefaultRating());
         examRuleBean.setDisciplineId(entity.getDiscipline().getId());
         examRuleBean.setThemeIds(entity.getThemes().stream().map(AbstractPersistable::getId).collect(Collectors.toList()));
         return examRuleBean;
@@ -163,13 +129,7 @@ public class ExamRuleService extends BasePersistentService<ExamRule, ExamRuleBea
 
     @Override
     protected ExamRule map(ExamRuleBean bean) {
-        ExamRule examRule = new ExamRule();
-        examRule.setName(bean.getName());
-        examRule.setExerciseCount(bean.getExerciseCount());
-        examRule.setQuestionCount(bean.getQuestionCount());
-        examRule.setDuration(bean.getDuration());
-        examRule.setMinimalRating(bean.getMinimalRating());
-        return examRule;
+        return null;
     }
 
 }

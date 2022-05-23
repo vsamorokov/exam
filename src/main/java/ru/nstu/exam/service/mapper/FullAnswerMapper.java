@@ -4,7 +4,7 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.AnswerBean;
-import ru.nstu.exam.bean.FullAnswerBean;
+import ru.nstu.exam.bean.full.FullAnswerBean;
 import ru.nstu.exam.entity.Answer;
 import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.entity.Task;
@@ -27,8 +27,8 @@ public class FullAnswerMapper implements Mapper<FullAnswerBean, Answer> {
             answerBean.setId(entity.getId());
             answerBean.setRating(entity.getRating());
             answerBean.setNumber(entity.getNumber());
-            answerBean.setTicketId(entity.getTicket() == null ? null : entity.getTicket().getId());
-            answerBean.setStatus(entity.getStatus());
+            answerBean.setStudentRatingId(entity.getStudentRating() == null ? null : entity.getStudentRating().getId());
+            answerBean.setState(entity.getState());
             answerBean.setTaskId(entity.getTask() == null ? null : entity.getTask().getId());
             fullAnswerBean.setAnswer(answerBean);
         }

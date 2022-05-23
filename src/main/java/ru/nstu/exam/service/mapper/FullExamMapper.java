@@ -2,23 +2,24 @@ package ru.nstu.exam.service.mapper;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.ExamBean;
-import ru.nstu.exam.bean.FullExamBean;
+import ru.nstu.exam.bean.full.FullExamBean;
+import ru.nstu.exam.bean.full.FullStudentRatingBean;
 import ru.nstu.exam.entity.Exam;
-import ru.nstu.exam.entity.ExamPeriod;
-import ru.nstu.exam.entity.ExamRule;
+import ru.nstu.exam.entity.Group;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ru.nstu.exam.utils.Utils.toMillis;
 
 @Component
 @RequiredArgsConstructor
 public class FullExamMapper implements Mapper<FullExamBean, Exam> {
 
-    private final FullExamRuleMapper examRuleMapper;
-    private final FullExamPeriodMapper examPeriodMapper;
+    private final FullGroupMapper groupMapper;
+    private final FullStudentRatingMapper studentRatingMapper;
 
     @Override
     public FullExamBean map(Exam entity, int level) {
@@ -26,27 +27,25 @@ public class FullExamMapper implements Mapper<FullExamBean, Exam> {
         if (level >= 0) {
             ExamBean examBean = new ExamBean();
             examBean.setId(entity.getId());
-            examBean.setExamRuleId(entity.getExamRule() == null ? null : entity.getExamRule().getId());
+            examBean.setName(entity.getName());
+            examBean.setStart(toMillis(entity.getStart()));
+            examBean.setEnd(toMillis(entity.getEnd()));
+            examBean.setState(entity.getState());
+            examBean.setOneGroup(entity.isOneGroup());
             examBean.setDisciplineId(entity.getDiscipline() == null ? null : entity.getDiscipline().getId());
-            examBean.setGroupIds(CollectionUtils.isEmpty(entity.getGroups()) ? null :
-                    entity.getGroups().stream()
-                            .map(AbstractPersistable::getId)
-                            .collect(Collectors.toList()));
+            examBean.setGroupId(entity.getGroup() == null ? null : entity.getGroup().getId());
             fullExamBean.setExam(examBean);
         }
         if (level >= 1) {
-            ExamRule examRule = entity.getExamRule();
-            if (examRule != null) {
-                fullExamBean.setExamRule(examRuleMapper.map(examRule, level - 1));
+            Group group = entity.getGroup();
+            if (group != null) {
+                fullExamBean.setGroup(groupMapper.map(group, level - 1));
             }
-            List<ExamPeriod> examPeriods = entity.getExamPeriods();
-            if (CollectionUtils.isNotEmpty(examPeriods)) {
-                fullExamBean.setPeriods(
-                        examPeriods.stream()
-                                .map(p -> examPeriodMapper.map(p, level - 1))
-                                .collect(Collectors.toList())
-                );
-            }
+
+            List<FullStudentRatingBean> studentRatings = CollectionUtils.emptyIfNull(entity.getStudentRatings()).stream()
+                    .map(ticket -> studentRatingMapper.map(ticket, level - 1))
+                    .collect(Collectors.toList());
+            fullExamBean.setTickets(studentRatings);
         }
         return fullExamBean;
     }

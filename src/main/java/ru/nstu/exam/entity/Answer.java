@@ -3,14 +3,14 @@ package ru.nstu.exam.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
-import ru.nstu.exam.enums.AnswerStatus;
+import ru.nstu.exam.enums.AnswerState;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Data
 @Entity
-@Table(name="answer")
+@Table(name = "answer")
 @EqualsAndHashCode(callSuper = true)
 @Where(clause = "deleted = false")
 public class Answer extends PersistableEntity {
@@ -19,12 +19,12 @@ public class Answer extends PersistableEntity {
     @JoinColumn(name = "task_id")
     private Task task;
 
-    @Column(name = "rating")
-    private Integer rating;
+    @Column(name = "rating", nullable = false)
+    private Integer rating = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ticket_id")
-    private Ticket ticket;
+    @JoinColumn(name = "student_rating_id")
+    private StudentRating studentRating;
 
     @OneToMany(mappedBy = "answer")
     private List<Message> messages;
@@ -34,5 +34,5 @@ public class Answer extends PersistableEntity {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private AnswerStatus status;
+    private AnswerState state;
 }

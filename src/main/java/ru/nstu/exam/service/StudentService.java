@@ -4,11 +4,12 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.StudentTicketBean;
+import ru.nstu.exam.bean.StudentRatingBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Student;
-import ru.nstu.exam.entity.Ticket;
+import ru.nstu.exam.entity.StudentRating;
+import ru.nstu.exam.enums.StudentStatus;
 import ru.nstu.exam.repository.StudentRepository;
 import ru.nstu.exam.security.UserRole;
 
@@ -24,13 +25,13 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
 
     private final GroupService groupService;
     private final AccountService accountService;
-    private final TicketService ticketService;
+    private final StudentRatingService studentRatingService;
 
-    public StudentService(StudentRepository repository, GroupService groupService, AccountService accountService, TicketService ticketService) {
+    public StudentService(StudentRepository repository, GroupService groupService, AccountService accountService, StudentRatingService studentRatingService) {
         super(repository);
         this.groupService = groupService;
         this.accountService = accountService;
-        this.ticketService = ticketService;
+        this.studentRatingService = studentRatingService;
     }
 
     public List<StudentBean> findByGroup(Long groupId) {
@@ -59,6 +60,7 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         Student student = map(studentBean);
         student.setAccount(account);
         student.setGroup(group);
+        student.setStatus(StudentStatus.ACTIVE);
         return map(save(student));
     }
 
@@ -72,8 +74,8 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
 
     @Override
     public void delete(Student student) {
-        for (Ticket ticket : CollectionUtils.emptyIfNull(student.getTickets())) {
-            ticketService.delete(ticket);
+        for (StudentRating studentRating : CollectionUtils.emptyIfNull(student.getStudentRatings())) {
+            studentRatingService.delete(studentRating);
         }
         accountService.delete(student.getAccount());
         super.delete(student);
@@ -89,12 +91,11 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         return map(getRepository().findByAccount(account));
     }
 
-    public List<StudentTicketBean> getTickets(Account account) {
+    public List<StudentRatingBean> getTickets(Account account) {
         Student student = getRepository().findByAccount(account);
-        if (student == null) {
-            userError("No student found");
-        }
-        return ticketService.getStudentTickets(student);
+        checkNotNull(student, "Student not found");
+
+        return studentRatingService.getStudentTickets(student);
     }
 
     @Override

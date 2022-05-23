@@ -4,8 +4,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 @Data
 @Entity
@@ -17,14 +19,4 @@ public class Teacher extends PersistableEntity {
     @OneToOne
     @JoinColumn(name = "account_id", referencedColumnName = "id")
     private Account account;
-
-    @ManyToMany
-    @JoinTable(name="teacher_discipline",
-            joinColumns = @JoinColumn(name="teacher_id"),
-            inverseJoinColumns = @JoinColumn(name="discipline_id")
-    )
-    private List<Discipline> disciplines;
-
-    @OneToMany(mappedBy = "teacher")
-    private List<Exam> exams;
 }

@@ -14,7 +14,7 @@ public class ExamSchedulingService {
     @Value("${exam-period.auto-update-enabled:false}")
     private boolean updateEnabled;
 
-    @Scheduled(fixedDelay = 1000) // 1 sec
+    @Scheduled(fixedDelay = 5000) // 5 sec
     private void updateStates() {
         if (updateEnabled) {
             examService.updateExamStates();

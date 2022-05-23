@@ -4,14 +4,13 @@ package ru.nstu.exam.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.nstu.exam.bean.CreateTeacherBean;
-import ru.nstu.exam.bean.DisciplineBean;
 import ru.nstu.exam.bean.TeacherBean;
-import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
-import ru.nstu.exam.security.IsTeacher;
-import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.TeacherService;
 
 import java.util.List;
@@ -38,10 +37,4 @@ public class TeacherController {
         return teacherService.createTeacher(teacher);
     }
 
-    @IsTeacher
-    @GetMapping("/discipline")
-    @Operation(summary = "Get teacher's disciplines")
-    public List<DisciplineBean> getDisciplines(@UserAccount Account account) {
-        return teacherService.findDisciplines(account);
-    }
 }

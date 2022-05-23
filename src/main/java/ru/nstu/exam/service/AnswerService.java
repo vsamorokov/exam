@@ -1,39 +1,50 @@
 package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.*;
+import ru.nstu.exam.bean.AnswerBean;
+import ru.nstu.exam.bean.MessageBean;
+import ru.nstu.exam.bean.full.FullAnswerBean;
+import ru.nstu.exam.bean.student.StudentAnswerBean;
+import ru.nstu.exam.bean.student.StudentTaskBean;
 import ru.nstu.exam.entity.*;
-import ru.nstu.exam.entity.utils.RatingMapping;
-import ru.nstu.exam.enums.AnswerStatus;
-import ru.nstu.exam.enums.ExamPeriodState;
-import ru.nstu.exam.enums.TaskType;
+import ru.nstu.exam.enums.AnswerState;
+import ru.nstu.exam.enums.ExamState;
 import ru.nstu.exam.repository.AnswerRepository;
 import ru.nstu.exam.security.UserRole;
+import ru.nstu.exam.service.listener.ExamStateChangeListener;
 import ru.nstu.exam.service.mapper.FullAnswerMapper;
+import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.enums.AnswerState.*;
+import static ru.nstu.exam.enums.TaskType.EXERCISE;
+import static ru.nstu.exam.enums.TaskType.QUESTION;
 import static ru.nstu.exam.utils.Utils.checkNotNull;
 import static ru.nstu.exam.utils.Utils.checkTrue;
 
 @Service
-public class AnswerService extends BasePersistentService<Answer, StudentAnswerBean, AnswerRepository> {
+public class AnswerService extends BasePersistentService<Answer, AnswerBean, AnswerRepository> implements ExamStateChangeListener {
     private final Random random = new Random();
 
     private final MessageService messageService;
-    private final TeacherService teacherService;
     private final FullAnswerMapper answerMapper;
+    private final StudentRatingService studentRatingService;
+    private final NotificationService notificationService;
+    private final TaskService taskService;
 
-    public AnswerService(AnswerRepository repository, MessageService messageService, TeacherService teacherService, FullAnswerMapper answerMapper) {
+    public AnswerService(AnswerRepository repository, MessageService messageService, FullAnswerMapper answerMapper, @Lazy StudentRatingService studentRatingService, NotificationService notificationService, @Lazy TaskService taskService) {
         super(repository);
         this.messageService = messageService;
-        this.teacherService = teacherService;
         this.answerMapper = answerMapper;
+        this.studentRatingService = studentRatingService;
+        this.notificationService = notificationService;
+        this.taskService = taskService;
     }
 
     public FullAnswerBean findFull(Long answerId, int level) {
@@ -42,120 +53,151 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
         return answerMapper.map(answer, level);
     }
 
-    public void generateAnswers(Ticket ticket, ExamRule examRule, List<Task> questions, List<Task> exercises) {
-        try {
-            Set<Long> usedQuestions = new HashSet<>(examRule.getQuestionCount());
-            Set<Long> usedExercises = new HashSet<>(examRule.getExerciseCount());
-            for (int i = 0; i < examRule.getQuestionCount(); i++) {
-                generateAnswer(ticket, questions, usedQuestions, i + 1);
+    public void generateAnswers(StudentRating studentRating) {
+        ExamRule examRule = studentRating.getGroupRating().getExamRule();
+
+        List<Task> questions = taskService.getQuestions(examRule);
+        List<Task> exercises = taskService.getExercises(examRule);
+        Set<Long> used = new HashSet<>();
+
+        Integer exerciseDefaultRating = examRule.getSingleExerciseDefaultRating();
+        Integer exerciseSum = examRule.getExercisesRatingSum();
+
+        int counter = 1;
+        int currentSum = 0;
+        while (currentSum < exerciseSum) {
+            Task task = exercises.get(random.nextInt(exercises.size()));
+            while (used.contains(task.getId())) {
+                task = exercises.get(random.nextInt(exercises.size()));
             }
-            for (int i = 0; i < examRule.getExerciseCount(); i++) {
-                generateAnswer(ticket, exercises, usedExercises, i + 1);
+            Answer answer = new Answer();
+            answer.setStudentRating(studentRating);
+            answer.setTask(task);
+            answer.setState(AnswerState.NO_ANSWER);
+            answer.setNumber(counter++);
+            save(answer);
+
+            used.add(task.getId());
+            currentSum += exerciseDefaultRating;
+        }
+
+        Integer questionDefaultRating = examRule.getSingleQuestionDefaultRating();
+        Integer questionSum = examRule.getQuestionsRatingSum();
+
+        counter = 1;
+        currentSum = 0;
+        used.clear();
+        while (currentSum < questionSum) {
+            Task task = questions.get(random.nextInt(exercises.size()));
+            while (used.contains(task.getId())) {
+                task = questions.get(random.nextInt(exercises.size()));
             }
-        } catch (Exception e) {
-            List<Answer> answers = getRepository().findAllByTicket(ticket);
-            answers.forEach(this::delete);
-            throw e;
+            Answer answer = new Answer();
+            answer.setStudentRating(studentRating);
+            answer.setTask(task);
+            answer.setState(AnswerState.NO_ANSWER);
+            answer.setNumber(counter++);
+            save(answer);
+
+            used.add(task.getId());
+            currentSum += questionDefaultRating;
         }
     }
 
-    private void generateAnswer(Ticket ticket, List<Task> tasks, Set<Long> usedTasks, int number) {
-        Answer answer = new Answer();
-        answer.setTicket(ticket);
-        int index = random.nextInt(tasks.size());
-        while (usedTasks.contains(tasks.get(index).getId())) {
-            index = random.nextInt(tasks.size());
-        }
-        answer.setTask(tasks.get(index));
-        answer.setNumber(number);
-        answer.setStatus(null);
-        usedTasks.add(tasks.get(index).getId());
-        save(answer);
+    public List<StudentAnswerBean> findByStudentRating(StudentRating studentRating, Pageable pageable) {
+        return getRepository().findAllByStudentRating(studentRating, pageable).stream().map(this::mapToStudent).collect(Collectors.toList());
     }
 
-    public List<StudentAnswerBean> findByTicket(Ticket ticket, Pageable pageable) {
-        return getRepository().findAllByTicket(ticket, pageable).stream().map(this::map).collect(Collectors.toList());
-    }
-
-    public void deleteByTicket(Ticket ticket) {
-        for (Answer answer : getRepository().findAllByTicket(ticket)) {
-            delete(answer);
-        }
-    }
-
-    public Page<MessageBean> findAllMessages(Long answerId, Account account, Pageable pageable) {
+    public Page<MessageBean> findAllMessages(Long answerId, Pageable pageable) {
         Answer answer = findById(answerId);
         checkNotNull(answer, "No answer found");
-        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            checkTrue(Objects.equals(account.getId(), answer.getTicket().getStudent().getAccount().getId()),
-                    "That student is not allowed to read there");
-        }
-        if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            checkTrue(Objects.equals(account.getId(), answer.getTicket().getExamPeriod().getExam().getTeacher().getAccount().getId()),
-                    "That teacher is not allowed to read there");
-        }
-
         return messageService.findAllByAnswer(answer, pageable);
     }
 
-    public MessageBean newMessage(Long answerId, NewMessageBean messageBean, Account account) {
+    public MessageBean newMessage(Long answerId, MessageBean messageBean, Account account) {
         Answer answer = findById(answerId);
-        if (answer == null) {
-            userError("No answer found");
+        checkNotNull(answer, "Answer not found");
+        Exam exam = answer.getStudentRating().getExam();
+        checkTrue(ExamState.PROGRESS.equals(exam.getState()), "Wrong state");
+
+        MessageBean answerMessage = messageService.createAnswerMessage(messageBean, answer, account);
+
+        if (account.getRoles().contains(UserRole.ROLE_STUDENT) && IN_PROGRESS.equals(answer.getState())) {
+            answer.setState(SENT);
         }
-        ExamPeriod examPeriod = answer.getTicket().getExamPeriod();
-        if (!ExamPeriodState.PROGRESS.equals(examPeriod.getState())) {
-            userError("Wrong state");
+
+        if (account.getRoles().contains(UserRole.ROLE_TEACHER) && SENT.equals(answer.getState())) {
+            answer.setState(CHECKING);
         }
-        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (!Objects.equals(answer.getTicket().getStudent().getAccount().getId(), account.getId())) {
-                userError("That student is not allowed to write there");
-            }
-            return messageService.createAnswerMessage(messageBean, answer, account);
-        } else if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            if (!Objects.equals(examPeriod.getExam().getTeacher().getAccount().getId(), account.getId())) {
-                userError("That teacher is not allowed to write there");
-            }
-            return messageService.createAnswerMessage(messageBean, answer, account);
-        }
-        return userError("Admin cannot write there");
+        save(answer);
+        return answerMessage;
     }
 
-    public void rate(Long answerId, UpdateAnswerBean answerBean, Account account) {
-        Answer answer = findById(answerId);
-        if (answer == null) {
-            userError("No answer found");
-        }
-        Teacher teacher = teacherService.findByAccount(account);
-        if (!Objects.equals(answer.getTicket().getExamPeriod().getExam().getTeacher().getId(), teacher.getId())) {
-            userError("That teacher is not allowed to rate");
-        }
-        Integer rating = answerBean.getRating();
-        if (rating == null) {
-            userError("Rating must not be null");
-        }
-        RatingSystem ratingSystem = answer.getTicket().getExamPeriod().getExam().getExamRule().getRatingSystem();
-        Integer maxQuestionRating = ratingSystem.getRatingMappings().stream()
-                .filter(rm -> rm.getTaskType() == TaskType.QUESTION)
-                .max(Comparator.comparingInt(RatingMapping::getRating))
-                .map(RatingMapping::getRating)
-                .orElse(0);
-        Integer maxExerciseRating = ratingSystem.getRatingMappings().stream()
-                .filter(rm -> rm.getTaskType() == TaskType.EXERCISE)
-                .max(Comparator.comparingInt(RatingMapping::getRating))
-                .map(RatingMapping::getRating)
-                .orElse(0);
-        Task task = answer.getTask();
-        if (TaskType.QUESTION.equals(task.getTaskType()) && rating > maxQuestionRating
-                || TaskType.EXERCISE.equals(task.getTaskType()) && rating > maxExerciseRating
-        ) {
-            userError("Rating must bot be bigger that max of rating system");
-        }
-        answer.setRating(rating);
-        AnswerStatus status = ratingSystem.getRatingMap().get(task.getTaskType()).get(rating);
-        answer.setStatus(status == null ? AnswerStatus.CHECKING : status);
+    @Override
+    public Answer save(Answer entity) {
+        Answer saved = super.save(entity);
+        studentRatingService.answerStateChanged(saved);
+        notificationService.answerStateChanged(saved);
+        return saved;
+    }
 
-        save(answer);
+    public AnswerBean updateState(AnswerBean bean, Account account) {
+
+        Answer answer = findById(bean.getId());
+        checkNotNull(answer, "Answer not found");
+        AnswerState newState = bean.getState();
+        checkNotNull(newState, "State cannot be null");
+        if (newState.equals(answer.getState())) {
+            return map(answer);
+        }
+        checkTrue(newState.allowedFor(answer), "Wrong answer state");
+        checkTrue(account.getRoles().contains(UserRole.ROLE_TEACHER) || NO_ANSWER.equals(answer.getState()),
+                "Student cannot do this");
+
+        if (RATED.equals(newState)) {
+            return map(rateAnswer(answer, bean.getRating()));
+        }
+
+        answer.setState(newState);
+        return map(save(answer));
+    }
+
+    private Answer rateAnswer(Answer answer, Integer rating) {
+        StudentRating studentRating = answer.getStudentRating();
+        checkNotNull(studentRating, "Student rating not found");
+
+        Exam exam = studentRating.getExam();
+        checkNotNull(exam, "Exam not found");
+
+        checkTrue(exam.getState().in(ExamState.PROGRESS, ExamState.FINISHED), "Wrong exam state");
+        ExamRule examRule = studentRating.getGroupRating().getExamRule();
+
+        if (QUESTION.equals(answer.getTask().getTaskType())) {
+            checkTrue(rating <= examRule.getSingleQuestionDefaultRating(),
+                    "Rating cannot be bigger then max question rating");
+        }
+        if (EXERCISE.equals(answer.getTask().getTaskType())) {
+            checkTrue(rating <= examRule.getSingleExerciseDefaultRating(),
+                    "Rating cannot be bigger then max exercise rating");
+        }
+
+        answer.setRating(rating);
+        answer.setState(RATED);
+        Answer saved = save(answer);
+        studentRatingService.answerStateChanged(saved);
+        return saved;
+    }
+
+    @Override
+    public void examClosed(Exam exam) {
+        exam.getStudentRatings().stream()
+                .map(StudentRating::getAnswers)
+                .flatMap(Collection::stream)
+                .filter(answer -> answer.getState().in(IN_PROGRESS, SENT, CHECKING))
+                .forEach(answer -> {
+                    answer.setState(NO_RATING);
+                    save(answer);
+                });
     }
 
     @Override
@@ -167,13 +209,26 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
     }
 
     @Override
-    protected StudentAnswerBean map(Answer entity) {
+    protected AnswerBean map(Answer entity) {
+        AnswerBean answerBean = new AnswerBean();
+        answerBean.setId(entity.getId());
+        answerBean.setStudentRatingId(entity.getStudentRating().getId());
+        answerBean.setTaskId(entity.getTask().getId());
+        answerBean.setState(entity.getState());
+        answerBean.setNumber(entity.getNumber());
+        answerBean.setRating(entity.getRating());
+        return answerBean;
+    }
+
+    private StudentAnswerBean mapToStudent(Answer entity) {
         Task task = entity.getTask();
 
         StudentAnswerBean bean = new StudentAnswerBean();
         bean.setId(entity.getId());
         bean.setRating(entity.getRating());
-        bean.setTicketId(entity.getTicket() == null ? null : entity.getTicket().getId());
+        bean.setStudentRatingId(entity.getStudentRating() == null ? null : entity.getStudentRating().getId());
+        bean.setNumber(entity.getNumber());
+        bean.setState(entity.getState());
 
         StudentTaskBean taskBean = new StudentTaskBean();
         taskBean.setId(task.getId());
@@ -183,14 +238,10 @@ public class AnswerService extends BasePersistentService<Answer, StudentAnswerBe
         taskBean.setThemeName(task.getTheme() == null ? null : task.getTheme().getName());
         bean.setTask(taskBean);
 
-        bean.setNumber(entity.getNumber());
-        bean.setStatus(entity.getStatus());
         return bean;
     }
 
-    @Override
-    protected Answer map(StudentAnswerBean bean) {
-        return null;
+    public List<AnswerBean> getAnswersByStudentRating(StudentRating sr) {
+        return mapToBeans(sr.getAnswers());
     }
-
 }

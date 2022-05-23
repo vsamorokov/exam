@@ -41,7 +41,7 @@ public abstract class BasePersistentService<T extends PersistableEntity, B exten
 
     @Transactional
     public T findById(Long id) {
-        if(id == null) {
+        if (id == null) {
             return null;
         }
         return repository.findById(id).orElse(null);
@@ -49,16 +49,21 @@ public abstract class BasePersistentService<T extends PersistableEntity, B exten
 
     @Transactional
     public T getById(Long id) {
-        if(id == null) {
+        if (id == null) {
             return null;
         }
         return repository.getById(id);
     }
 
-    protected abstract B map(T entity);
-    protected abstract T map(B bean);
+    protected B map(T entity) {
+        return null;
+    }
 
-    protected List<B> mapToBeans(List<T> entities){
+    protected T map(B bean) {
+        return null;
+    }
+
+    protected List<B> mapToBeans(List<T> entities) {
         return entities.stream().map(this::map).collect(Collectors.toList());
     }
 }

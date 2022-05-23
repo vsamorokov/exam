@@ -13,10 +13,31 @@ import java.util.List;
 @Table(name = "exam_rule")
 @EqualsAndHashCode(callSuper = true)
 @Where(clause = "deleted = false")
-public class ExamRule extends PersistableEntity {
+public class ExamRule extends NamedEntity {
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "duration", nullable = false)
+    private Integer duration; // minutes
+
+    @Column(name = "minimal_semester_rating", nullable = false)
+    private Integer minimalSemesterRating;
+
+    @Column(name = "minimal_exam_rating", nullable = false)
+    private Integer minimalExamRating; // To pass an exam
+
+    @Column(name = "maximum_exam_rating", nullable = false)
+    private Integer maximumExamRating; // 100% of work done
+
+    @Column(name = "single_question_default_rating", nullable = false)
+    private Integer singleQuestionDefaultRating;
+
+    @Column(name = "single_exercise_default_rating", nullable = false)
+    private Integer singleExerciseDefaultRating;
+
+    @Column(name = "questions_rating_sum", nullable = false)
+    private Integer questionsRatingSum;
+
+    @Column(name = "exercises_rating_sum", nullable = false)
+    private Integer exercisesRatingSum;
 
     @ManyToMany
     @JoinTable(
@@ -31,21 +52,5 @@ public class ExamRule extends PersistableEntity {
     private Discipline discipline;
 
     @OneToMany(mappedBy = "examRule")
-    private List<Exam> exams;
-
-    @Column(name = "question_count")
-    private Integer questionCount;
-
-    @Column(name = "exercise_count")
-    private Integer exerciseCount;
-
-    @Column(name = "duration", nullable = false)
-    private Integer duration; // minutes
-
-    @Column(name = "minimal_rating", nullable = false)
-    private Integer minimalRating;
-
-    @ManyToOne
-    @JoinColumn(name = "rating_system_id")
-    private RatingSystem ratingSystem;
+    private List<GroupRating> groupRatings;
 }

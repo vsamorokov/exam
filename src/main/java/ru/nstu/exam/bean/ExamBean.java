@@ -3,17 +3,24 @@ package ru.nstu.exam.bean;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
+import ru.nstu.exam.enums.ExamState;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExamBean extends EntityBean {
 
-    private Long examRuleId;
+    private String name = "";
 
     private Long disciplineId;
 
-    private List<Long> groupIds;
+    private Long groupId;
+
+    private boolean oneGroup;
+
+    private Long start;
+
+    private Long end;
+
+    private ExamState state;
 }

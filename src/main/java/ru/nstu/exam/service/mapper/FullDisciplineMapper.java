@@ -4,8 +4,8 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.DisciplineBean;
-import ru.nstu.exam.bean.FullDisciplineBean;
-import ru.nstu.exam.bean.FullThemeBean;
+import ru.nstu.exam.bean.full.FullDisciplineBean;
+import ru.nstu.exam.bean.full.FullThemeBean;
 import ru.nstu.exam.entity.Discipline;
 
 import java.util.List;

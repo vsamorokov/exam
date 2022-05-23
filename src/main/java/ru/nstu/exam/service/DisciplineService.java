@@ -4,9 +4,12 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.DisciplineBean;
-import ru.nstu.exam.bean.FullDisciplineBean;
 import ru.nstu.exam.bean.ThemeBean;
-import ru.nstu.exam.entity.*;
+import ru.nstu.exam.bean.full.FullDisciplineBean;
+import ru.nstu.exam.entity.Discipline;
+import ru.nstu.exam.entity.Exam;
+import ru.nstu.exam.entity.ExamRule;
+import ru.nstu.exam.entity.Theme;
 import ru.nstu.exam.repository.DisciplineRepository;
 import ru.nstu.exam.service.mapper.FullDisciplineMapper;
 
@@ -52,26 +55,20 @@ public class DisciplineService extends BasePersistentService<Discipline, Discipl
         return map(save(map(disciplineBean)));
     }
 
-    public DisciplineBean update(Long id, DisciplineBean disciplineBean) {
-        Discipline discipline = findById(id);
-        if (discipline == null) {
-            userError("Discipline not found");
-        }
+    public DisciplineBean update(DisciplineBean disciplineBean) {
+        Discipline discipline = findById(disciplineBean.getId());
+        checkNotNull(discipline, "Discipline not found");
+
         discipline.setName(disciplineBean.getName());
         return map(save(discipline));
     }
 
     public void delete(Long id) {
         Discipline discipline = findById(id);
-        if (discipline == null) {
-            userError("Discipline not found");
-        }
+        checkNotNull(discipline, "Discipline not found");
         delete(discipline);
     }
 
-    public List<DisciplineBean> findByTeacher(Teacher teacher) {
-        return mapToBeans(getRepository().findByTeachersContaining(teacher));
-    }
 
     public List<ThemeBean> getThemes(Long disciplineId) {
         Discipline discipline = findById(disciplineId);

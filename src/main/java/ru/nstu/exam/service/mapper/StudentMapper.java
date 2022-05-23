@@ -16,6 +16,7 @@ public class StudentMapper implements Mapper<StudentBean, Student> {
     public StudentBean map(Student entity, int level) {
         StudentBean studentBean = new StudentBean();
         studentBean.setId(entity.getId());
+        studentBean.setStatus(entity.getStatus());
         AccountBean accountBean = new AccountBean();
         Account account = entity.getAccount();
         if (account != null) {

@@ -3,8 +3,10 @@ package ru.nstu.exam.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Where;
+import ru.nstu.exam.enums.ExamState;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -12,28 +14,29 @@ import java.util.List;
 @Table(name = "exam")
 @EqualsAndHashCode(callSuper = true)
 @Where(clause = "deleted = false")
-public class Exam extends PersistableEntity {
-
-    @OneToMany(mappedBy = "exam")
-    private List<ExamPeriod> examPeriods;
-
-    @ManyToOne
-    @JoinColumn(name = "exam_rule_id")
-    private ExamRule examRule;
+public class Exam extends NamedEntity {
 
     @ManyToOne
     @JoinColumn(name = "discipline_id")
     private Discipline discipline;
 
     @ManyToOne
-    @JoinColumn(name = "teacher_id")
-    private Teacher teacher;
+    @JoinColumn(name = "group_id")
+    private Group group;
 
-    @ManyToMany
-    @JoinTable(
-            name = "exam_group",
-            joinColumns = @JoinColumn(name = "exam_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<Group> groups;
+    @Column(name = "one_group", nullable = false)
+    private boolean oneGroup;
+
+    @Column(name = "\"start\"")
+    private LocalDateTime start;
+
+    @Column(name = "\"end\"")
+    private LocalDateTime end;
+
+    @OneToMany(mappedBy = "exam")
+    private List<StudentRating> studentRatings;
+
+    @Column(name = "state", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ExamState state;
 }

@@ -3,7 +3,7 @@ package ru.nstu.exam.bean;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ru.nstu.exam.enums.AnswerStatus;
+import ru.nstu.exam.enums.AnswerState;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -14,9 +14,9 @@ public class AnswerBean extends EntityBean {
 
     private Integer rating;
 
-    private Long ticketId;
+    private Long studentRatingId;
 
     private Integer number; // index of an answer in ticket
 
-    private AnswerStatus status;
+    private AnswerState state;
 }

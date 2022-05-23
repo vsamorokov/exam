@@ -4,8 +4,8 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import ru.nstu.exam.bean.FullTaskBean;
 import ru.nstu.exam.bean.TaskBean;
+import ru.nstu.exam.bean.full.FullTaskBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.TaskType;
 import ru.nstu.exam.repository.TaskRepository;
@@ -13,10 +13,10 @@ import ru.nstu.exam.service.mapper.FullTaskMapper;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.utils.Utils.checkNotNull;
+import static ru.nstu.exam.utils.Utils.checkTrue;
 
 @Service
 public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepository> {
@@ -41,8 +41,7 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         if (teacher == null) {
             userError("Teacher not found");
         }
-        Set<Theme> themes = teacher.getDisciplines().stream().flatMap(d -> d.getThemes().stream()).collect(Collectors.toSet());
-        return mapToBeans(getRepository().findAllByThemeIn(themes));
+        return mapToBeans(getRepository().findAll());
     }
 
     public FullTaskBean findOne(Long taskId, int level) {
@@ -76,14 +75,11 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         return map(save(task));
     }
 
-    public TaskBean update(Long id, TaskBean taskBean) {
-        if (!StringUtils.hasText(taskBean.getText()) && taskBean.getArtefactId() == null) {
-            userError("No content provided");
-        }
-        Task task = findById(id);
-        if (task == null) {
-            userError("Task not found");
-        }
+    public TaskBean update(TaskBean taskBean) {
+        checkTrue(StringUtils.hasText(taskBean.getText()) || taskBean.getArtefactId() != null,
+                "No content provided");
+        Task task = findById(taskBean.getId());
+        checkNotNull(task, String.format("Task with id %s not found", taskBean.getId()));
         task.setText(taskBean.getText());
         task.setTaskType(taskBean.getTaskType());
 

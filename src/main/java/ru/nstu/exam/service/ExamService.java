@@ -1,66 +1,57 @@
 package ru.nstu.exam.service;
 
-import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
-import liquibase.repackaged.org.apache.commons.collections4.SetUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.*;
+import ru.nstu.exam.bean.AnswerBean;
+import ru.nstu.exam.bean.ExamBean;
+import ru.nstu.exam.bean.StudentRatingBean;
+import ru.nstu.exam.bean.full.FullExamBean;
 import ru.nstu.exam.entity.*;
-import ru.nstu.exam.enums.ExamPeriodState;
-import ru.nstu.exam.exception.ExamException;
-import ru.nstu.exam.repository.ExamPeriodRepository;
+import ru.nstu.exam.enums.ExamState;
+import ru.nstu.exam.enums.StudentRatingState;
 import ru.nstu.exam.repository.ExamRepository;
-import ru.nstu.exam.security.UserRole;
 import ru.nstu.exam.service.mapper.FullExamMapper;
-import ru.nstu.exam.service.mapper.FullExamPeriodMapper;
+import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
-import static ru.nstu.exam.exception.ExamException.serverError;
-import static ru.nstu.exam.exception.ExamException.userError;
+import static ru.nstu.exam.enums.ExamState.*;
 import static ru.nstu.exam.utils.Utils.*;
 
 @Service
 public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepository> {
-    private final ExamRuleService examRuleService;
-    private final TeacherService teacherService;
     private final GroupService groupService;
     private final DisciplineService disciplineService;
-    private final TicketService ticketService;
-    private final ExamPeriodRepository examPeriodRepository;
-    private final MessageService messageService;
+    private final StudentRatingService studentRatingService;
     private final FullExamMapper fullExamMapper;
-    private final FullExamPeriodMapper fullExamPeriodMapper;
+    private final NotificationService notificationService;
+    private final ReportService reportService;
+    private final GroupRatingService groupRatingService;
 
-    public ExamService(ExamRepository repository, ExamRuleService examRuleService, TeacherService teacherService, GroupService groupService, DisciplineService disciplineService, TicketService ticketService, ExamPeriodRepository examPeriodRepository, MessageService messageService, FullExamMapper fullExamMapper, FullExamPeriodMapper fullExamPeriodMapper) {
+    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, NotificationService notificationService, ReportService reportService, GroupRatingService groupRatingService) {
         super(repository);
-        this.examRuleService = examRuleService;
-        this.teacherService = teacherService;
         this.groupService = groupService;
         this.disciplineService = disciplineService;
-        this.ticketService = ticketService;
-        this.examPeriodRepository = examPeriodRepository;
-        this.messageService = messageService;
+        this.studentRatingService = studentRatingService;
         this.fullExamMapper = fullExamMapper;
-        this.fullExamPeriodMapper = fullExamPeriodMapper;
+        this.notificationService = notificationService;
+        this.reportService = reportService;
+        this.groupRatingService = groupRatingService;
     }
 
-    public List<ExamBean> findAll(Account account) {
-        Teacher teacher = teacherService.findByAccount(account);
-        if (teacher == null) {
-            serverError("No teacher found");
-        }
-        return mapToBeans(getRepository().findAllByTeacher(teacher));
+    public List<ExamBean> findAll() {
+        return mapToBeans(getRepository().findAll());
     }
 
     public FullExamBean findFull(Long examId, int level) {
         Exam exam = findById(examId);
         checkNotNull(exam, "Exam not found");
-        return fullExamMapper.map(exam);
+        return fullExamMapper.map(exam, level);
     }
 
     public ExamBean findOne(Long examId) {
@@ -69,346 +60,220 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(exam);
     }
 
-    public ExamBean createExam(CreateExamBean examBean, Account account) {
-        if (!account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            serverError("Not teacher cannot create exam");
+    public ExamBean createExam(ExamBean examBean) {
+        Exam exam = new Exam();
+        fillExam(exam, examBean);
+        exam.setState(REDACTION);
+        Exam saved = save(exam);
+
+        studentRatingService.examCreated(saved);
+        return map(saved);
+    }
+
+    public ExamBean updateExam(ExamBean examBean) {
+        Exam exam = findById(examBean.getId());
+        checkNotNull(exam, "Exam with id " + examBean.getId() + " not found");
+
+        checkTrue(ExamState.REDACTION.equals(exam.getState()), "Wrong state");
+
+        fillExam(exam, examBean);
+
+        return map(save(exam));
+    }
+
+    private void fillExam(Exam exam, ExamBean bean) {
+
+        exam.setName(bean.getName());
+
+        Discipline discipline = disciplineService.findById(bean.getDisciplineId());
+        checkNotNull(discipline, "No discipline with provided id");
+        exam.setDiscipline(discipline);
+
+        if (bean.isOneGroup()) {
+            Group group = groupService.findById(bean.getGroupId());
+            checkNotNull(group, "Group with id " + bean.getGroupId() + " not found");
+
+            GroupRating groupRating = groupRatingService.find(discipline, group);
+            checkNotNull(groupRating, "Group rating for group " + group.getName() + " and discipline " + discipline.getName() + "not found");
+
+            List<StudentRating> studentRatings = groupRating.getStudentRatings().stream()
+                    .filter(r -> r.getStudentRatingState().equals(StudentRatingState.ALLOWED))
+                    .collect(Collectors.toList());
+
+            exam.setOneGroup(true);
+            exam.setGroup(group);
+            exam.setStudentRatings(studentRatings);
+        } else {
+            List<StudentRating> ratings = discipline.getGroupRatings().stream()
+                    .map(GroupRating::getStudentRatings)
+                    .flatMap(Collection::stream)
+                    .filter(r -> StudentRatingState.ALLOWED.equals(r.getStudentRatingState()))
+                    .collect(Collectors.toList());
+
+            exam.setOneGroup(false);
+            exam.setGroup(null);
+            exam.setStudentRatings(ratings);
         }
-        Teacher teacher = teacherService.findByAccount(account);
-        if (teacher == null) {
-            serverError("No teacher found");
-        }
-        Discipline discipline = disciplineService.findById(examBean.getDisciplineId());
-        if (discipline == null) {
-            userError("No discipline with provided id");
-        }
-        ExamRule examRule = examRuleService.findById(examBean.getExamRuleId());
-        if (examRule == null) {
-            userError("No exam rule with provided id");
-        }
-        List<Long> groupIds = examBean.getGroupIds();
-        if (CollectionUtils.isEmpty(groupIds)) {
-            userError("Exam must have at least 1 group");
-        }
-        List<Group> groups = new ArrayList<>(groupIds.size());
-        for (Long groupId : groupIds) {
-            Group group = groupService.findById(groupId);
-            if (group == null) {
-                userError("No group with id " + groupId);
-            }
-            groups.add(group);
-        }
-        if (examBean.getStartTime() == null) {
-            userError("Empty start date");
+    }
+
+    public ExamBean updateState(ExamBean examBean) {
+        Exam exam = findById(examBean.getId());
+        checkNotNull(exam, "Exam not found");
+
+        ExamState newState = examBean.getState();
+        checkNotNull(newState, "State cannot be null");
+        if (newState.equals(exam.getState())) {
+            return map(exam);
         }
 
-        Exam exam = new Exam();
-        exam.setDiscipline(discipline);
-        exam.setExamRule(examRule);
-        exam.setTeacher(teacher);
-        exam.setGroups(groups);
+        if (TIME_SET.equals(newState)) {
+            return map(setTime(exam, examBean));
+        }
+
+        if (PROGRESS.equals(newState)) {
+            return map(startExam(exam));
+        }
+
+        if (FINISHED.equals(newState)) {
+            return map(finishExam(exam));
+        }
+
+        if (CLOSED.equals(newState)) {
+            return map(closeExam(exam));
+        }
+
+        checkTrue(newState.isAllowedFor(exam), "Wrong state");
+        exam.setState(newState);
 
         Exam saved = save(exam);
 
-        try {
-            createPeriodInternal(saved, examBean.getStartTime(), examRule);
-        } catch (ExamException e) {
-            delete(saved);
-            throw e;
+        if (READY.equals(newState)) {
+            notificationService.examReady(exam);
         }
 
         return map(saved);
     }
 
-    public ExamBean updateExam(Long examId, CreateExamBean examBean, Account account) {
-        Exam exam = findById(examId);
-        if (exam == null) {
-            userError("No exam found");
-        }
-        if (!Objects.equals(exam.getTeacher().getAccount().getId(), account.getId())) {
-            userError("Forbidden");
-        }
-        List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
-        if (periods.size() != 1) {
-            userError("Cannot modify exam that already had been closed");
-        }
-        if (!ExamPeriodState.REDACTION.equals(periods.get(0).getState())) {
-            userError("Wrong state");
-        }
-
-        Long disciplineId = examBean.getDisciplineId();
-        if (disciplineId != null) {
-            Discipline discipline = disciplineService.findById(disciplineId);
-            if (discipline == null) {
-                userError("No discipline with provided id");
+    private Exam setTime(Exam exam, ExamBean examBean) {
+        checkTrue(TIME_SET.isAllowedFor(exam), "Wrong state");
+        Long start = examBean.getStart();
+        checkNotNull(start, "Exam start cannot be null");
+        exam.setStart(toLocalDateTime(start));
+        exam.setState(TIME_SET);
+        Long end = examBean.getEnd();
+        if (end != null) {
+            checkTrue(toLocalDateTime(start).isAfter(toLocalDateTime(end)), "End must be after start");
+            exam.setEnd(toLocalDateTime(end));
+        } else { // From duration
+            if (exam.isOneGroup()) {
+                GroupRating groupRating = groupRatingService.find(exam.getDiscipline(), exam.getGroup());
+                Integer duration = groupRating.getExamRule().getDuration();
+                exam.setEnd(toLocalDateTime(start).plusMinutes(duration));
+            } else {
+                Integer duration = exam.getStudentRatings().stream()
+                        .map(StudentRating::getGroupRating)
+                        .map(GroupRating::getExamRule)
+                        .map(ExamRule::getDuration)
+                        .max(Comparator.comparingInt(o -> o))
+                        .orElse(0);
+                exam.setEnd(toLocalDateTime(start).plusMinutes(duration));
             }
-            exam.setDiscipline(discipline);
         }
-
-        Long examRuleId = examBean.getExamRuleId();
-        if (examRuleId != null) {
-            ExamRule examRule = examRuleService.findById(examRuleId);
-            if (examRule == null) {
-                userError("No exam rule with provided id");
-            }
-            exam.setExamRule(examRule);
-        }
-
-        List<Long> groupIds = examBean.getGroupIds();
-        if (!CollectionUtils.isEmpty(groupIds)) {
-            List<Group> groups = new ArrayList<>(groupIds.size());
-            for (Long groupId : groupIds) {
-                Group group = groupService.findById(groupId);
-                if (group == null) {
-                    userError("No group with id " + groupId);
-                }
-                groups.add(group);
-            }
-            exam.setGroups(groups);
-        }
-
-        if (examBean.getStartTime() != null) {
-            updatePeriodInternal(exam, examBean.getStartTime(), exam.getExamRule());
-        }
-
-        return map(save(exam));
+        return save(exam);
     }
 
-    private void createPeriodInternal(Exam exam, Long start, ExamRule examRule) {
-        ExamPeriod examPeriod = new ExamPeriod();
-        examPeriod.setStart(toLocalDateTime(start));
-        examPeriod.setEnd(toLocalDateTime(start).plusMinutes(examRule.getDuration()));
-        examPeriod.setExam(exam);
-        examPeriod.setState(ExamPeriodState.REDACTION);
-        examPeriod = examPeriodRepository.save(examPeriod);
-        try {
-            ticketService.generateTickets(examRule, examPeriod, exam.getGroups());
-        } catch (Exception e) {
-            examPeriod.setDeleted(true);
-            examPeriodRepository.save(examPeriod);
-            throw e;
-        }
+    private Exam startExam(Exam exam) {
+        checkTrue(PROGRESS.isAllowedFor(exam), "Wrong state");
+        exam.setState(PROGRESS);
+
+        Exam saved = save(exam);
+
+        studentRatingService.examStarted(saved);
+
+        notificationService.examStarted(saved);
+        return saved;
     }
 
-    private void updatePeriodInternal(Exam exam, Long start, ExamRule examRule) {
-        List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
-        if (periods.size() != 1) {
-            userError("Cannot modify exam that already had been closed");
-        }
-        ExamPeriod period = periods.get(0);
-        if (!ExamPeriodState.REDACTION.equals(period.getState())) {
-            userError("Wrong state");
-        }
-        LocalDateTime startTime = toLocalDateTime(start);
+    private Exam finishExam(Exam exam) {
+        checkTrue(FINISHED.isAllowedFor(exam), "Wrong state");
+        exam.setState(FINISHED);
+        Exam saved = save(exam);
 
-        period.setStart(startTime);
-        period.setEnd(startTime.plusMinutes(examRule.getDuration()));
-        examPeriodRepository.save(period);
+        studentRatingService.examFinished(saved);
+
+        notificationService.examFinished(saved);
+        return saved;
     }
 
-    public ExamPeriodBean updatePeriod(Long periodId, UpdateExamPeriodBean bean) {
-        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        if (bean.getStart() != null && bean.getState() == null) {
-            if (!ExamPeriodState.REDACTION.equals(period.getState())) {
-                userError("Wrong state");
-            }
-            Exam exam = period.getExam();
-            LocalDateTime start = toLocalDateTime(bean.getStart());
-            period.setStart(start);
-            period.setEnd(start.plusMinutes(exam.getExamRule().getDuration()));
-            ExamPeriod saved = examPeriodRepository.save(period);
-            return map(saved);
-        }
-        if (bean.getStart() == null && bean.getState() != null) {
-            if (!bean.getState().isAllowed(period)) {
-                userError("Wrong state");
-            }
-            period.setState(bean.getState());
-            ExamPeriod saved = examPeriodRepository.save(period);
-            return map(saved);
-        }
-        return userError("Wrong parameters");
+    private Exam closeExam(Exam exam) {
+        checkTrue(CLOSED.isAllowedFor(exam), "Wrong state");
+        exam.setState(CLOSED);
+
+        Exam saved = save(exam);
+
+        reportService.generateReport(saved);
+        notificationService.examClosed(saved);
+        return saved;
     }
 
-    public List<TicketBean> findUnPassed(Long examId) {
-        Exam exam = findById(examId);
-        checkNotNull(exam, "No exam found");
-        return ticketService.getUnPassed(exam);
-    }
-
-    public ExamPeriodBean getPeriod(Long periodId, Account account) {
-        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("Period not found"));
-
-        if (account.getRoles().contains(UserRole.ROLE_ADMIN)) {
-            checkTrue(Objects.equals(period.getExam().getTeacher().getAccount().getId(), account.getId()),
-                    "Teacher not allowed to this exam");
-            return map(period);
-        } else if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (period.getState().isBefore(ExamPeriodState.READY) ||
-                    period.getTickets().stream()
-                            .noneMatch(t -> t.getAllowed() && Objects.equals(t.getStudent().getAccount().getId(), account.getId()))) {
-                userError("Student not allowed to this exam");
-            }
-            return map(period);
-        }
-        return userError("Not allowed to this exam");
-    }
-
-
-    public FullExamPeriodBean findFullPeriod(Long periodId, int level) {
-        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("Period not found"));
-        return fullExamPeriodMapper.map(period, level);
-    }
-
-    public ExamPeriodBean findLastPeriod(Long examId) {
+    public void delete(Long examId) {
         Exam exam = findById(examId);
         checkNotNull(exam, "Exam not found");
-        List<ExamPeriod> examPeriods = exam.getExamPeriods();
-        return CollectionUtils.emptyIfNull(examPeriods).stream()
-                .max(Comparator.comparing(ExamPeriod::getStart))
-                .map(this::map)
-                .orElse(null);
-    }
-
-    public List<ExamPeriodBean> findPeriods(Long examId) {
-        Exam exam = findById(examId);
-        checkNotNull(exam, "Exam not found");
-        List<ExamPeriod> periods = examPeriodRepository.findAllByExam(exam);
-        List<ExamPeriodBean> beans = new ArrayList<>(periods.size());
-        for (ExamPeriod examPeriod : periods) {
-            ExamPeriodBean examPeriodBean = map(examPeriod);
-            beans.add(examPeriodBean);
-        }
-        return beans;
-    }
-
-    public List<TicketBean> findTickets(Long periodId) {
-        ExamPeriod period = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No exam period found"));
-
-        return ticketService.findByPeriod(period);
-    }
-
-    public Page<MessageBean> findAllMessages(Long periodId, Account account, Pageable pageable) {
-        ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (examPeriod.getTickets().stream()
-                    .noneMatch(t ->
-                            Objects.equals(account.getId(), t.getStudent().getAccount().getId())
-                    )
-            ) {
-                userError("That student is not allowed to read there");
-            }
-        }
-        if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            if (!Objects.equals(examPeriod.getExam().getTeacher().getAccount().getId(), account.getId())) {
-                userError("That teacher is not allowed to read there");
-            }
-        }
-        return messageService.findAllByExamPeriod(examPeriod, pageable);
-    }
-
-    public MessageBean newMessage(Long periodId, NewMessageBean messageBean, Account account) {
-        ExamPeriod examPeriod = examPeriodRepository.findById(periodId).orElseGet(() -> userError("No period found"));
-        checkTrue(ExamPeriodState.PROGRESS.equals(examPeriod.getState()), "Wrong state");
-        if (account.getRoles().contains(UserRole.ROLE_STUDENT)) {
-            if (examPeriod.getTickets().stream()
-                    .noneMatch(t ->
-                            Objects.equals(account.getId(), t.getStudent().getAccount().getId())
-                    )
-            ) {
-                userError("That student is not allowed to write there");
-            }
-            return messageService.createExamPeriodMessage(messageBean, examPeriod, account);
-        } else if (account.getRoles().contains(UserRole.ROLE_TEACHER)) {
-            if (!Objects.equals(examPeriod.getExam().getTeacher().getAccount().getId(), account.getId())) {
-                userError("That teacher is not allowed to write there");
-            }
-            return messageService.createExamPeriodMessage(messageBean, examPeriod, account);
-        }
-        return userError("Admin cannot write there");
-    }
-
-    public void updateExamStates() {
-        List<ExamPeriod> readyPeriods = examPeriodRepository.findAllByStateIn(Collections.singleton(ExamPeriodState.READY));
-
-        for (ExamPeriod readyPeriod : readyPeriods) {
-            if (readyPeriod.getStart().isAfter(LocalDateTime.now(UTC))) {
-                readyPeriod.setState(ExamPeriodState.PROGRESS);
-                examPeriodRepository.save(readyPeriod);
-            }
-        }
-
-        List<ExamPeriod> inProgressPeriods = examPeriodRepository.findAllByStateIn(Collections.singleton(ExamPeriodState.PROGRESS));
-
-        for (ExamPeriod inProgressPeriod : inProgressPeriods) {
-            if (inProgressPeriod.getEnd().isAfter(LocalDateTime.now(UTC))) {
-                inProgressPeriod.setState(ExamPeriodState.FINISHED);
-                examPeriodRepository.save(inProgressPeriod);
-            }
-        }
-    }
-
-    public void deleteExam(Long examId, Account account) {
-        Exam exam = findById(examId);
-        checkNotNull(exam, "Exam not found");
-        checkTrue(Objects.equals(exam.getTeacher().getAccount().getId(), account.getId()),
-                "That teacher cannot do this");
         delete(exam);
     }
 
     @Override
     public void delete(Exam exam) {
-        Collection<ExamPeriod> examPeriods = CollectionUtils.emptyIfNull(exam.getExamPeriods());
-        for (ExamPeriod examPeriod : examPeriods) {
-            if (examPeriod.getState().in(SetUtils.hashSet(ExamPeriodState.PROGRESS, ExamPeriodState.FINISHED))) {
-                userError("Exam " + exam.getId() + " is in progress or finished");
-            }
-            checkTrue(hasBackup(examPeriod), "Exam period cannot be deleted as it doesn't have backup");
-        }
-        for (ExamPeriod examPeriod : examPeriods) {
-            deleteExamPeriod(examPeriod);
-        }
+        checkTrue(exam.getState().equals(CLOSED) || exam.getState().isBefore(PROGRESS), "Wrong exam state");
         super.delete(exam);
-    }
-
-    public void deleteExamPeriod(Long examPeriodId) {
-        ExamPeriod period = examPeriodRepository.findById(examPeriodId).orElseGet(() -> userError("Exam period not found"));
-        deleteExamPeriod(period);
-    }
-
-    private void deleteExamPeriod(ExamPeriod examPeriod) {
-        checkTrue(hasBackup(examPeriod), "Exam period cannot be deleted as it doesn't have backup");
-        ticketService.deleteByPeriod(examPeriod);
-        examPeriod.setDeleted(true);
-        examPeriodRepository.save(examPeriod);
-    }
-
-    private boolean hasBackup(ExamPeriod examPeriod) {
-        return true; // TODO: 24.04.2022 Add implementation
     }
 
     @Override
     protected ExamBean map(Exam entity) {
         ExamBean examBean = new ExamBean();
         examBean.setId(entity.getId());
-        examBean.setDisciplineId(entity.getDiscipline() == null ? null : entity.getDiscipline().getId());
-        examBean.setExamRuleId(entity.getExamRule() == null ? null : entity.getExamRule().getId());
-        examBean.setGroupIds(entity.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
+        examBean.setStart(toMillis(entity.getStart()));
+        examBean.setEnd(toMillis(entity.getEnd()));
+        examBean.setState(entity.getState());
+        examBean.setDisciplineId(entity.getDiscipline().getId());
+        examBean.setName(entity.getName());
+        examBean.setGroupId(entity.getGroup() == null ? null : entity.getGroup().getId());
         return examBean;
     }
 
-    @Override
-    protected Exam map(ExamBean bean) {
-        return new Exam();
+    public List<StudentRatingBean> findRatings(Long examId) {
+        Exam exam = findById(examId);
+        checkNotNull(exam, "Exam not found");
+
+        return studentRatingService.findByExam(exam);
     }
 
-    protected ExamPeriodBean map(ExamPeriod entity) {
-        ExamPeriodBean bean = new ExamPeriodBean();
-        bean.setId(entity.getId());
-        bean.setExamId(entity.getExam().getId());
-        bean.setStart(toMillis(entity.getStart()));
-        bean.setEnd(toMillis(entity.getEnd()));
-        bean.setState(entity.getState());
-        return bean;
+    public void updateExamStates() {
+        List<Exam> readyExams = getRepository().findAllByStateIn(Collections.singleton(ExamState.READY));
+
+        for (Exam readyExam : readyExams) {
+            if (readyExam.getStart().isAfter(LocalDateTime.now(UTC))) {
+                startExam(readyExam);
+            }
+        }
+
+        List<Exam> progressExams = getRepository().findAllByStateIn(Collections.singleton(PROGRESS));
+
+        for (Exam progressExam : progressExams) {
+            if (progressExam.getEnd().isAfter(LocalDateTime.now(UTC))) {
+                progressExam.setState(FINISHED);
+                Exam saved = save(progressExam);
+                notificationService.examFinished(saved);
+            }
+        }
     }
 
+    public List<AnswerBean> findAnswers(Long examId) {
+        Exam exam = findById(examId);
+        checkNotNull(exam, String.format("Exam with id %s not found", examId));
+        return exam.getStudentRatings().stream()
+                .map(studentRatingService::getAnswers)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
 }

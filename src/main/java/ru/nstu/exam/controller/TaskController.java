@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.FullTaskBean;
 import ru.nstu.exam.bean.TaskBean;
+import ru.nstu.exam.bean.full.FullTaskBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.security.UserAccount;
@@ -42,10 +42,10 @@ public class TaskController {
     }
 
     @IsTeacher
-    @PutMapping("/{taskId}")
+    @PutMapping
     @Operation(summary = "Update a task")
-    public TaskBean updateTask(@PathVariable Long taskId, @RequestBody TaskBean taskBean) {
-        return taskService.update(taskId, taskBean);
+    public TaskBean updateTask(@RequestBody TaskBean taskBean) {
+        return taskService.update(taskBean);
     }
 
     @IsTeacher

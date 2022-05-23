@@ -2,8 +2,8 @@ package ru.nstu.exam.service.mapper;
 
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.ArtefactBean;
-import ru.nstu.exam.bean.FullTaskBean;
 import ru.nstu.exam.bean.TaskBean;
+import ru.nstu.exam.bean.full.FullTaskBean;
 import ru.nstu.exam.entity.Artefact;
 import ru.nstu.exam.entity.Task;
 

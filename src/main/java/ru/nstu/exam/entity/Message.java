@@ -32,8 +32,4 @@ public class Message extends PersistableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "answer_id")
     private Answer answer;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exam_period_id")
-    private ExamPeriod examPeriod;
 }

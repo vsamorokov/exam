@@ -39,17 +39,17 @@ public class AccountController {
         return accountService.me(account);
     }
 
-    @PutMapping
+    @PutMapping("/me")
     @Operation(summary = "Update sender's account")
     public AccountBean updateMyAccount(@RequestBody AccountBean accountBean, @UserAccount Account account) {
         return accountService.update(accountBean, account);
     }
 
     @IsAdmin
-    @PutMapping("/{accountId}")
-    @Operation(summary = "Update sender's account")
-    public AccountBean updateAccount(@PathVariable Long accountId, @RequestBody AccountBean accountBean) {
-        return accountService.update(accountId, accountBean);
+    @PutMapping
+    @Operation(summary = "Update other's account")
+    public AccountBean updateAccount(@RequestBody AccountBean accountBean) {
+        return accountService.update(accountBean);
     }
 
     @IsAdmin

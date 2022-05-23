@@ -2,8 +2,12 @@ package ru.nstu.exam.service.mapper;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import ru.nstu.exam.bean.*;
+import ru.nstu.exam.bean.GroupBean;
+import ru.nstu.exam.bean.StudentBean;
+import ru.nstu.exam.bean.full.FullGroupBean;
+import ru.nstu.exam.bean.full.FullGroupRatingBean;
 import ru.nstu.exam.entity.Group;
 
 import java.util.List;
@@ -13,8 +17,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FullGroupMapper implements Mapper<FullGroupBean, Group> {
 
-    private final FullDisciplineMapper disciplineMapper;
     private final StudentMapper studentMapper;
+    @Lazy
+    private final FullGroupRatingMapper groupRatingMapper;
 
     @Override
     public FullGroupBean map(Group entity, int level) {
@@ -26,12 +31,11 @@ public class FullGroupMapper implements Mapper<FullGroupBean, Group> {
             bean.setGroup(groupBean);
         }
         if (level >= 1) {
-            List<DisciplineBean> disciplineBeans = CollectionUtils.emptyIfNull(entity.getDisciplines())
+            List<FullGroupRatingBean> groupRatings = CollectionUtils.emptyIfNull(entity.getGroupRatings())
                     .stream()
-                    .map(disciplineMapper::map)
-                    .map(FullDisciplineBean::getDiscipline)
+                    .map(gr -> groupRatingMapper.map(gr, level - 1))
                     .collect(Collectors.toList());
-            bean.setDisciplines(disciplineBeans);
+            bean.setGroupRatings(groupRatings);
 
             List<StudentBean> studentBeans = CollectionUtils.emptyIfNull(entity.getStudents())
                     .stream()

@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Component;
 import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.FullExamRuleBean;
+import ru.nstu.exam.bean.full.FullExamRuleBean;
+import ru.nstu.exam.bean.full.FullThemeBean;
 import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.ExamRule;
-import ru.nstu.exam.entity.Theme;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,13 +27,16 @@ public class FullExamRuleMapper implements Mapper<FullExamRuleBean, ExamRule> {
             ExamRuleBean examRuleBean = new ExamRuleBean();
             examRuleBean.setId(entity.getId());
             examRuleBean.setName(entity.getName());
+            examRuleBean.setMaximumExamRating(entity.getMaximumExamRating());
+            examRuleBean.setMinimalExamRating(entity.getMinimalExamRating());
             examRuleBean.setDuration(entity.getDuration());
-            examRuleBean.setExerciseCount(entity.getExerciseCount());
-            examRuleBean.setQuestionCount(entity.getQuestionCount());
-            examRuleBean.setMinimalRating(entity.getMinimalRating());
-            examRuleBean.setDisciplineId(entity.getDiscipline() == null ? null : entity.getDiscipline().getId());
-            examRuleBean.setThemeIds(entity.getThemes() == null ? null :
-                    entity.getThemes().stream().map(AbstractPersistable::getId).collect(Collectors.toList()));
+            examRuleBean.setMinimalSemesterRating(entity.getMinimalSemesterRating());
+            examRuleBean.setExercisesRatingSum(entity.getExercisesRatingSum());
+            examRuleBean.setQuestionsRatingSum(entity.getQuestionsRatingSum());
+            examRuleBean.setSingleExerciseDefaultRating(entity.getSingleExerciseDefaultRating());
+            examRuleBean.setSingleQuestionDefaultRating(entity.getSingleQuestionDefaultRating());
+            examRuleBean.setDisciplineId(entity.getDiscipline().getId());
+            examRuleBean.setThemeIds(entity.getThemes().stream().map(AbstractPersistable::getId).collect(Collectors.toList()));
             fullExamRuleBean.setExamRule(examRuleBean);
         }
         if (level >= 1) {
@@ -41,14 +44,10 @@ public class FullExamRuleMapper implements Mapper<FullExamRuleBean, ExamRule> {
             if (discipline != null) {
                 fullExamRuleBean.setDiscipline(disciplineMapper.map(discipline, level - 1));
             }
-            List<Theme> themes = entity.getThemes();
-            if (CollectionUtils.isNotEmpty(themes)) {
-                fullExamRuleBean.setThemes(
-                        themes.stream()
-                                .map(t -> themeMapper.map(t, level - 1))
-                                .collect(Collectors.toList())
-                );
-            }
+            List<FullThemeBean> themes = CollectionUtils.emptyIfNull(entity.getThemes()).stream()
+                    .map(t -> themeMapper.map(t, level - 1))
+                    .collect(Collectors.toList());
+            fullExamRuleBean.setThemes(themes);
         }
         return fullExamRuleBean;
     }

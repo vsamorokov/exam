@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.nstu.exam.bean.*;
+import ru.nstu.exam.bean.DisciplineBean;
+import ru.nstu.exam.bean.ExamRuleBean;
+import ru.nstu.exam.bean.ThemeBean;
+import ru.nstu.exam.bean.full.FullDisciplineBean;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsTeacher;
 import ru.nstu.exam.service.DisciplineService;
 import ru.nstu.exam.service.ExamRuleService;
-import ru.nstu.exam.service.GroupService;
 
 import java.util.List;
 
@@ -20,7 +22,6 @@ import java.util.List;
 public class DisciplineController {
     private final ExamRuleService examRuleService;
     private final DisciplineService disciplineService;
-    private final GroupService groupService;
 
     @GetMapping
     @Operation(summary = "Get all disciplines")
@@ -48,17 +49,17 @@ public class DisciplineController {
     }
 
     @IsAdmin
-    @PutMapping("/{disciplineId}")
+    @PutMapping
     @Operation(summary = "Update a discipline")
-    public DisciplineBean update(@PathVariable Long disciplineId, @RequestBody DisciplineBean disciplineBean) {
-        return disciplineService.update(disciplineId, disciplineBean);
+    public DisciplineBean update(@RequestBody DisciplineBean disciplineBean) {
+        return disciplineService.update(disciplineBean);
     }
 
     @IsAdmin
-    @DeleteMapping("/{disciplineId}")
+    @DeleteMapping("/{id}")
     @Operation(summary = "Delete a discipline")
-    public void delete(@PathVariable Long disciplineId) {
-        disciplineService.delete(disciplineId);
+    public void delete(@PathVariable Long id) {
+        disciplineService.delete(id);
     }
 
     @GetMapping("/{disciplineId}/themes")
@@ -67,16 +68,9 @@ public class DisciplineController {
     }
 
     @IsTeacher
-    @GetMapping("/{disciplineId}/exam-rule")
+    @GetMapping("/{id}/exam-rule")
     @Operation(summary = "Get exam rules by discipline")
-    public List<ExamRuleBean> findExamRules(@PathVariable Long disciplineId) {
-        return examRuleService.findByDiscipline(disciplineId);
-    }
-
-    @IsTeacher
-    @GetMapping("/{disciplineId}/group")
-    @Operation(summary = "Get groups by discipline")
-    public List<GroupBean> findGroups(@PathVariable Long disciplineId){
-        return groupService.findByDiscipline(disciplineId);
+    public List<ExamRuleBean> findExamRules(@PathVariable Long id) {
+        return examRuleService.findByDiscipline(id);
     }
 }
