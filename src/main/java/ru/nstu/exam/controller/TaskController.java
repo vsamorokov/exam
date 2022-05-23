@@ -30,8 +30,14 @@ public class TaskController {
 
     @GetMapping("/{taskId}")
     @Operation(summary = "Get one task")
-    public FullTaskBean findOne(@PathVariable Long taskId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
-        return taskService.findOne(taskId, level);
+    public TaskBean findOne(@PathVariable Long taskId) {
+        return taskService.findOne(taskId);
+    }
+
+    @GetMapping("/{taskId}/full")
+    @Operation(summary = "Get full task")
+    public FullTaskBean findFull(@PathVariable Long taskId, @RequestParam(name = "level", required = false, defaultValue = "0") int level) {
+        return taskService.findFull(taskId, level);
     }
 
     @IsTeacher

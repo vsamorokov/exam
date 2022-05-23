@@ -3,11 +3,13 @@ package ru.nstu.exam.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.GroupRatingBean;
+import ru.nstu.exam.bean.full.FullGroupRatingBean;
 import ru.nstu.exam.entity.Discipline;
 import ru.nstu.exam.entity.ExamRule;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.GroupRating;
 import ru.nstu.exam.repository.GroupRatingRepository;
+import ru.nstu.exam.service.mapper.FullGroupRatingMapper;
 
 import static ru.nstu.exam.enums.StudentRatingState.EMPTY;
 import static ru.nstu.exam.enums.StudentRatingState.NOT_ALLOWED;
@@ -22,13 +24,27 @@ public class GroupRatingService extends BasePersistentService<GroupRating, Group
     private final GroupService groupService;
     private final ExamRuleService examRuleService;
     private final StudentRatingService studentRatingService;
+    private final FullGroupRatingMapper groupRatingMapper;
 
-    public GroupRatingService(GroupRatingRepository repository, DisciplineService disciplineService, GroupService groupService, ExamRuleService examRuleService, StudentRatingService studentRatingService) {
+    public GroupRatingService(GroupRatingRepository repository, DisciplineService disciplineService, GroupService groupService, ExamRuleService examRuleService, StudentRatingService studentRatingService, FullGroupRatingMapper groupRatingMapper) {
         super(repository);
         this.disciplineService = disciplineService;
         this.groupService = groupService;
         this.examRuleService = examRuleService;
         this.studentRatingService = studentRatingService;
+        this.groupRatingMapper = groupRatingMapper;
+    }
+
+    public GroupRatingBean findOne(Long id) {
+        GroupRating groupRating = findById(id);
+        checkNotNull(groupRating, "Group rating not found");
+        return map(groupRating);
+    }
+
+    public FullGroupRatingBean findFull(Long id, int level) {
+        GroupRating groupRating = findById(id);
+        checkNotNull(groupRating, "Group rating not found");
+        return groupRatingMapper.map(groupRating, level);
     }
 
     public GroupRatingBean create(GroupRatingBean bean) {
@@ -66,6 +82,12 @@ public class GroupRatingService extends BasePersistentService<GroupRating, Group
         groupRating.setDiscipline(discipline);
         groupRating.setGroup(group);
         groupRating.setExamRule(examRule);
+    }
+
+    public void delete(Long id) {
+        GroupRating groupRating = findById(id);
+        checkNotNull(groupRating, "Group rating not found");
+        delete(groupRating);
     }
 
     @Override

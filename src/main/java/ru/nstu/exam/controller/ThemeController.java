@@ -28,8 +28,14 @@ public class ThemeController {
 
     @GetMapping("/{themeId}")
     @Operation(summary = "Get one theme")
-    public FullThemeBean getOne(@PathVariable Long themeId, @RequestParam(required = false, defaultValue = "0") int level) {
-        return themeService.findOne(themeId, level);
+    public ThemeBean getOne(@PathVariable Long themeId) {
+        return themeService.findOne(themeId);
+    }
+
+    @GetMapping("/{themeId}/full")
+    @Operation(summary = "Get one theme")
+    public FullThemeBean getFull(@PathVariable Long themeId, @RequestParam(required = false, defaultValue = "0") int level) {
+        return themeService.findFull(themeId, level);
     }
 
     @IsTeacher

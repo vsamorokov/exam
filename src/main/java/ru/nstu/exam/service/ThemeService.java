@@ -16,7 +16,6 @@ import ru.nstu.exam.service.mapper.FullThemeMapper;
 import java.util.Collection;
 import java.util.List;
 
-import static ru.nstu.exam.exception.ExamException.userError;
 import static ru.nstu.exam.utils.Utils.checkNotEmpty;
 import static ru.nstu.exam.utils.Utils.checkNotNull;
 
@@ -36,11 +35,15 @@ public class ThemeService extends BasePersistentService<Theme, ThemeBean, ThemeR
         this.themeMapper = themeMapper;
     }
 
-    public FullThemeBean findOne(Long themeId, int level) {
+    public ThemeBean findOne(Long id) {
+        Theme theme = findById(id);
+        checkNotNull(theme, String.format("Theme with id %s not found", id));
+        return map(theme);
+    }
+
+    public FullThemeBean findFull(Long themeId, int level) {
         Theme theme = findById(themeId);
-        if (theme == null) {
-            userError("Theme not found");
-        }
+        checkNotNull(theme, String.format("Theme with id %s not found", themeId));
         return themeMapper.map(theme, level);
     }
 

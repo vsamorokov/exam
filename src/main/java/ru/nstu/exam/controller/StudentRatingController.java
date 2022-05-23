@@ -25,15 +25,15 @@ public class StudentRatingController {
 
     private final StudentRatingService studentRatingService;
 
-    @GetMapping("/{ticketId}/full")
+    @GetMapping("/{id}/full")
     @Operation(summary = "Get full student rating")
-    public FullStudentRatingBean getFull(@PathVariable Long ticketId, @RequestParam(required = false, defaultValue = "0") int level) {
-        return studentRatingService.findFull(ticketId, level);
+    public FullStudentRatingBean getFull(@PathVariable Long id, @RequestParam(required = false, defaultValue = "0") int level) {
+        return studentRatingService.findFull(id, level);
     }
 
     @IsTeacher
     @PutMapping
-    @Operation(summary = "Update Student rating")
+    @Operation(summary = "Update Student rating", description = "Updates semester rating and moves to Allowed or Not Allowed states")
     public void update(@RequestBody StudentRatingBean studentRatingBean) {
         studentRatingService.update(studentRatingBean);
     }
@@ -53,5 +53,4 @@ public class StudentRatingController {
     ) {
         return studentRatingService.getStudentAnswers(id, pageable);
     }
-
 }

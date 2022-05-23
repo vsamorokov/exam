@@ -44,7 +44,13 @@ public class TaskService extends BasePersistentService<Task, TaskBean, TaskRepos
         return mapToBeans(getRepository().findAll());
     }
 
-    public FullTaskBean findOne(Long taskId, int level) {
+    public TaskBean findOne(Long taskId) {
+        Task task = findById(taskId);
+        checkNotNull(task, String.format("Task with id %s not found", taskId));
+        return map(task);
+    }
+
+    public FullTaskBean findFull(Long taskId, int level) {
         Task task = findById(taskId);
         if (task == null) {
             userError("Task not found");

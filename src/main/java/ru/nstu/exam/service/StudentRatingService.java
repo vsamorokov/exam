@@ -37,8 +37,14 @@ public class StudentRatingService
         this.ticketMapper = ticketMapper;
     }
 
-    public FullStudentRatingBean findFull(Long ticketId, int level) {
-        StudentRating studentRating = findById(ticketId);
+    public StudentRatingBean findOne(Long id) {
+        StudentRating studentRating = findById(id);
+        checkNotNull(studentRating, "Ticket not found");
+        return map(studentRating);
+    }
+
+    public FullStudentRatingBean findFull(Long id, int level) {
+        StudentRating studentRating = findById(id);
         checkNotNull(studentRating, "Ticket not found");
         return ticketMapper.map(studentRating, level);
     }

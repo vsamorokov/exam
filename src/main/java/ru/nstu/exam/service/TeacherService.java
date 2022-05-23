@@ -17,12 +17,10 @@ import static ru.nstu.exam.exception.ExamException.userError;
 @Service
 public class TeacherService extends BasePersistentService<Teacher, TeacherBean, TeacherRepository> {
     private final AccountService accountService;
-    private final DisciplineService disciplineService;
 
-    public TeacherService(TeacherRepository repository, AccountService accountService, DisciplineService disciplineService) {
+    public TeacherService(TeacherRepository repository, AccountService accountService) {
         super(repository);
         this.accountService = accountService;
-        this.disciplineService = disciplineService;
     }
 
     public Teacher findByAccount(Account account) {
