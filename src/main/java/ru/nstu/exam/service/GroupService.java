@@ -61,7 +61,7 @@ public class GroupService extends BasePersistentService<Group, GroupBean, GroupR
     private void checkGroup(GroupBean groupBean) {
         String name = groupBean.getName();
         checkNotEmpty(name, "Group must have name");
-        checkTrue(getRepository().countByName(name) > 0, "Group with name (" + name + ") already exists");
+        checkFalse(getRepository().countByName(name) > 0, "Group with name (" + name + ") already exists");
     }
 
     public void delete(Long id) {
