@@ -27,4 +27,4 @@ file:
   max-size-bytes: 41943040 # 40MB
 
 exam-period:
-  auto-update-enabled: true
+  auto-update-enabled: false

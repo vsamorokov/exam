@@ -238,6 +238,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         examBean.setDisciplineId(entity.getDiscipline().getId());
         examBean.setName(entity.getName());
         examBean.setGroupId(entity.getGroup() == null ? null : entity.getGroup().getId());
+        examBean.setOneGroup(entity.isOneGroup());
         return examBean;
     }
 
@@ -249,7 +250,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     }
 
     public void updateExamStates() {
-        List<Exam> readyExams = getRepository().findAllByStateIn(Collections.singleton(ExamState.READY));
+        List<Exam> readyExams = getRepository().findAllByStateIn(Collections.singleton(TIME_SET));
 
         for (Exam readyExam : readyExams) {
             if (readyExam.getStart().isAfter(LocalDateTime.now(UTC))) {
