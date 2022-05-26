@@ -10,7 +10,6 @@ import ru.nstu.exam.entity.Answer;
 import ru.nstu.exam.entity.Artefact;
 import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.repository.MessageRepository;
-import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.time.LocalDateTime;
 

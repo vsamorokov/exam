@@ -9,6 +9,4 @@ public class Notification {
     private NotificationType type;
     private Long receiverId;
     private Object data;
-
-
 }

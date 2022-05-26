@@ -17,7 +17,6 @@ import ru.nstu.exam.repository.AnswerRepository;
 import ru.nstu.exam.security.UserRole;
 import ru.nstu.exam.service.listener.ExamStateChangeListener;
 import ru.nstu.exam.service.mapper.FullAnswerMapper;
-import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.util.*;
 import java.util.stream.Collectors;

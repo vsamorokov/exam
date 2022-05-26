@@ -10,7 +10,6 @@ import ru.nstu.exam.enums.ExamState;
 import ru.nstu.exam.enums.StudentRatingState;
 import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.service.mapper.FullExamMapper;
-import ru.nstu.exam.websocket.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -67,6 +66,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         Exam saved = save(exam);
 
         studentRatingService.examCreated(saved);
+        notificationService.examCreated(saved);
         return map(saved);
     }
 

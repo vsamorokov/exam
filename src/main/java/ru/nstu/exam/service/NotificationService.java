@@ -1,4 +1,4 @@
-package ru.nstu.exam.websocket.service;
+package ru.nstu.exam.service;
 
 import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.service.listener.AnswerStateChangeListener;

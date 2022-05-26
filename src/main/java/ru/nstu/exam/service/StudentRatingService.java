@@ -2,6 +2,7 @@ package ru.nstu.exam.service;
 
 import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.StudentRatingBean;
@@ -49,6 +50,22 @@ public class StudentRatingService
         return ticketMapper.map(studentRating, level);
     }
 
+    public void create(Student student) {
+        Group group = student.getGroup();
+        for (GroupRating groupRating : CollectionUtils.emptyIfNull(group.getGroupRatings())) {
+            if (getRepository().existsByStudentAndGroupRating(student, groupRating)) {
+                continue;
+            }
+            StudentRating studentRating = new StudentRating();
+            studentRating.setStudent(student);
+            studentRating.setStudentRatingState(NOT_ALLOWED);
+            studentRating.setGroupRating(groupRating);
+            studentRating.setQuestionRating(0);
+            studentRating.setExerciseRating(0);
+            studentRating.setSemesterRating(0);
+            save(studentRating);
+        }
+    }
 
     public void create(GroupRating groupRating) {
         List<Student> students = groupRating.getGroup().getStudents();
@@ -120,7 +137,13 @@ public class StudentRatingService
 
     @Override
     public void examCreated(Exam exam) {
-        for (StudentRating studentRating : exam.getStudentRatings()) {
+        List<Long> ids = exam.getStudentRatings().stream().map(AbstractPersistable::getId).collect(Collectors.toList());
+        for (Long id : ids) {
+            StudentRating studentRating = findById(id);
+            if (studentRating == null) {
+                continue;
+            }
+            studentRating.setExam(exam);
             studentRating.setStudentRatingState(StudentRatingState.ASSIGNED_TO_EXAM);
             save(studentRating);
         }
@@ -164,9 +187,17 @@ public class StudentRatingService
 
     private StudentRating startExamForStudent(StudentRating studentRating) {
         checkTrue(PASSING.allowedFor(studentRating), "Wrong state");
+        StudentRatingState oldState = studentRating.getStudentRatingState();
+
         studentRating.setStudentRatingState(PASSING);
         StudentRating saved = save(studentRating);
-        answerService.generateAnswers(saved);
+        try {
+            answerService.generateAnswers(saved);
+        } catch (Exception e) {
+            saved.setStudentRatingState(oldState);
+            save(saved);
+            throw e;
+        }
         return saved;
     }
 

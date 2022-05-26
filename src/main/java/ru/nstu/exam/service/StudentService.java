@@ -61,7 +61,9 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         student.setAccount(account);
         student.setGroup(group);
         student.setStatus(StudentStatus.ACTIVE);
-        return map(save(student));
+        Student saved = save(student);
+        studentRatingService.create(student);
+        return map(saved);
     }
 
     public void delete(Long id) {

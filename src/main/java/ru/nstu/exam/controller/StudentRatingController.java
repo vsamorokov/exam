@@ -25,6 +25,12 @@ public class StudentRatingController {
 
     private final StudentRatingService studentRatingService;
 
+    @GetMapping
+    @Operation(summary = "Get all student ratings")
+    public List<StudentRatingBean> findAll() {
+        return studentRatingService.findAll();
+    }
+
     @GetMapping("/{id}/full")
     @Operation(summary = "Get full student rating")
     public FullStudentRatingBean getFull(@PathVariable Long id, @RequestParam(required = false, defaultValue = "0") int level) {

@@ -10,5 +10,8 @@
     <changeSet id="2" author="vsamorokov">
         <sqlFile path="task_notnull_fix.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="3" author="vsamorokov">
+        <sqlFile path="st_rat_notnull_fix.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
