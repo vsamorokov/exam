@@ -1,0 +1,83 @@
+<html>
+<head>
+    <title>Chat WebSocket</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script type="text/javascript">
+        let stompClient = null;
+
+        function setConnected(connected) {
+            document.getElementById('connect').disabled = connected
+            document.getElementById('disconnect').disabled = !connected
+            document.getElementById('conversationDiv').style.visibility
+                = connected ? 'visible' : 'hidden'
+            document.getElementById('response-not').innerHTML = ''
+            document.getElementById('response-ans').innerHTML = ''
+        }
+
+        function connect() {
+            const socket = new SockJS('http://localhost:8080/ws')
+            stompClient = Stomp.over(socket)
+            window.connection = stompClient.connect({}, function (frame) {
+                setConnected(true)
+                console.log('Connected: ' + frame)
+                subscribe('/answers/1', function (messageOutput) {
+                    console.log("Got Answer message", messageOutput)
+                    showMessageOutput(JSON.parse(messageOutput.body), 'answer')
+                })
+                subscribe('/user/123/notifications', function (messageOutput) {
+                    console.log("Got Notification message", messageOutput)
+                    showMessageOutput(JSON.parse(messageOutput.body), 'notification')
+                })
+            })
+        }
+
+        const subscribe = (topic, handler) => stompClient.subscribe(topic, handler)
+
+        function disconnect() {
+            if (stompClient != null) {
+                stompClient.disconnect()
+            }
+            setConnected(false)
+            console.log("Disconnected")
+        }
+
+        function sendMessage() {
+            const from = document.getElementById('from').value;
+            const text = document.getElementById('text').value;
+            stompClient.send("/message/answers", {},
+                JSON.stringify({'answerId': '1', 'senderId': from, 'text': text}))
+        }
+
+        function showMessageOutput(messageOutput, type) {
+            const response = document.getElementById(type === 'notification' ? 'response-not' : 'response-ans');
+            const p = document.createElement('p');
+            p.style.wordWrap = 'break-word'
+            p.appendChild(document.createTextNode(messageOutput.text + " " + messageOutput.userId))
+            response.appendChild(p)
+        }
+    </script>
+</head>
+<body onload="disconnect()">
+<div>
+    <div>
+        <label for="from">User id</label><input type="text" id="from" placeholder="User id"/>
+    </div>
+    <br/>
+    <div>
+        <button id="connect" onclick="connect()">Connect</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect()">
+            Disconnect
+        </button>
+    </div>
+    <br/>
+    <div id="conversationDiv">
+        <label for="text">Write a message</label><input type="text" id="text" placeholder="Write a message..."/>
+        <button id="sendMessage" onclick="sendMessage()">Send</button>
+        <p id="response-not"></p>
+        <p id="response-ans"></p>
+    </div>
+</div>
+
+</body>
+</html>

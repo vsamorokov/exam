@@ -24,8 +24,11 @@ springdoc:
 
 logging:
   level:
-    org.springframework.security: trace
-    ru.nstu: trace
+    #    org.springframework.security: trace
+    #    ru.nstu: trace
+    org.springframework.websocket: trace
+    org.springframework.messaging: trace
+
 
 auth:
   token:
