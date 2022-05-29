@@ -232,7 +232,7 @@ public class StudentRatingService
         bean.setStudentId(entity.getStudent().getId());
         bean.setExamId(entity.getExam() == null ? null : entity.getExam().getId());
         bean.setStudentRatingState(entity.getStudentRatingState());
-
+        bean.setGroupRatingId(entity.getGroupRating().getId());
         return bean;
     }
 
