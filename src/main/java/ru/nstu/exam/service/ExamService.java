@@ -42,8 +42,10 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         this.teacherService = teacherService;
     }
 
-    public List<ExamBean> findAll() {
-        return mapToBeans(getRepository().findAll());
+    public List<ExamBean> findAll(Account account) {
+        Teacher teacher = teacherService.findByAccount(account);
+        checkNotNull(teacher, "Teacher not found");
+        return mapToBeans(getRepository().findAllByTeacher(teacher));
     }
 
     public FullExamBean findFull(Long examId, int level) {
