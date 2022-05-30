@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import ru.nstu.exam.bean.ExamBean;
 import ru.nstu.exam.bean.ExamRuleBean;
 import ru.nstu.exam.bean.StudentRatingBean;
+import ru.nstu.exam.bean.TeacherBean;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -13,4 +14,5 @@ import ru.nstu.exam.bean.StudentRatingBean;
 public class StudentExamInfoBean extends StudentRatingBean {
     private ExamBean exam;
     private ExamRuleBean examRule;
+    private TeacherBean teacher;
 }

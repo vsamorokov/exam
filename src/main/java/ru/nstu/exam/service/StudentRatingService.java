@@ -4,10 +4,7 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
-import ru.nstu.exam.bean.AnswerBean;
-import ru.nstu.exam.bean.ExamBean;
-import ru.nstu.exam.bean.ExamRuleBean;
-import ru.nstu.exam.bean.StudentRatingBean;
+import ru.nstu.exam.bean.*;
 import ru.nstu.exam.bean.full.FullStudentRatingBean;
 import ru.nstu.exam.bean.student.StudentAnswerBean;
 import ru.nstu.exam.bean.student.StudentExamInfoBean;
@@ -282,6 +279,19 @@ public class StudentRatingService
         examRuleBean.setThemeIds(examRule.getThemes().stream().map(AbstractPersistable::getId).collect(Collectors.toList()));
         bean.setExamRule(examRuleBean);
 
+        Teacher teacher = exam.getTeacher();
+        Account account = teacher.getAccount();
+        TeacherBean teacherBean = new TeacherBean();
+        teacherBean.setId(teacher.getId());
+        AccountBean accountBean = new AccountBean();
+        accountBean.setId(account.getId());
+        accountBean.setUsername(account.getUsername());
+        accountBean.setName(account.getName());
+        accountBean.setSurname(account.getSurname());
+        accountBean.setRoles(account.getRoles());
+        teacherBean.setAccount(accountBean);
+
+        bean.setTeacher(teacherBean);
         return bean;
     }
 
