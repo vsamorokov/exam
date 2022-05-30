@@ -4,7 +4,7 @@ import liquibase.repackaged.org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AccountBean;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.StudentRatingBean;
+import ru.nstu.exam.bean.student.StudentExamInfoBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Group;
 import ru.nstu.exam.entity.Student;
@@ -93,11 +93,11 @@ public class StudentService extends BasePersistentService<Student, StudentBean, 
         return map(getRepository().findByAccount(account));
     }
 
-    public List<StudentRatingBean> getTickets(Account account) {
+    public List<StudentExamInfoBean> getTickets(Account account) {
         Student student = getRepository().findByAccount(account);
         checkNotNull(student, "Student not found");
 
-        return studentRatingService.getStudentTickets(student);
+        return studentRatingService.getStudentExamInfo(student);
     }
 
     @Override

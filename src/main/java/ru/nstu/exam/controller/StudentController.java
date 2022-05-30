@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.StudentBean;
-import ru.nstu.exam.bean.StudentRatingBean;
+import ru.nstu.exam.bean.student.StudentExamInfoBean;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.IsStudent;
@@ -45,9 +45,9 @@ public class StudentController {
     }
 
     @IsStudent
-    @GetMapping("/tickets")
+    @GetMapping("/exam-infos")
     @Operation(summary = "Get student's tickets")
-    public List<StudentRatingBean> getTickets(@UserAccount Account account) {
+    public List<StudentExamInfoBean> getTickets(@UserAccount Account account) {
         return studentService.getTickets(account);
     }
 

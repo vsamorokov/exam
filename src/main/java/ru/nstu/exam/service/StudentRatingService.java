@@ -5,9 +5,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.stereotype.Service;
 import ru.nstu.exam.bean.AnswerBean;
+import ru.nstu.exam.bean.ExamBean;
+import ru.nstu.exam.bean.ExamRuleBean;
 import ru.nstu.exam.bean.StudentRatingBean;
 import ru.nstu.exam.bean.full.FullStudentRatingBean;
 import ru.nstu.exam.bean.student.StudentAnswerBean;
+import ru.nstu.exam.bean.student.StudentExamInfoBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.ExamState;
 import ru.nstu.exam.enums.StudentRatingState;
@@ -22,8 +25,7 @@ import java.util.stream.Collectors;
 
 import static ru.nstu.exam.enums.StudentRatingState.*;
 import static ru.nstu.exam.exception.ExamException.userError;
-import static ru.nstu.exam.utils.Utils.checkNotNull;
-import static ru.nstu.exam.utils.Utils.checkTrue;
+import static ru.nstu.exam.utils.Utils.*;
 
 @Service
 public class StudentRatingService
@@ -101,10 +103,10 @@ public class StudentRatingService
         return mapToBeans(exam.getStudentRatings());
     }
 
-    public List<StudentRatingBean> getStudentTickets(Student student) {
+    public List<StudentExamInfoBean> getStudentExamInfo(Student student) {
         return getRepository().findAllByStudent(student).stream()
                 .filter(sr -> sr.getStudentRatingState().in(ASSIGNED_TO_EXAM, WAITING_TO_APPEAR, PASSING, FINISHED, RATED))
-                .map(this::map)
+                .map(this::mapToStudentBean)
                 .collect(Collectors.toList());
     }
 
@@ -239,40 +241,48 @@ public class StudentRatingService
     public List<AnswerBean> getAnswers(StudentRating sr) {
         return answerService.getAnswersByStudentRating(sr);
     }
-//
-//    private StudentTicketBean mapToStudentBean(StudentRating studentRating) {
-//        Exam exam = studentRating.getExam();
-//        Teacher teacher = exam.getTeacher();
-//        Discipline discipline = exam.getDiscipline();
-//        ExamRule examRule = exam.getExamRule();
-//
-//        StudentTicketBean bean = new StudentTicketBean();
-//
-//        bean.setId(studentRating.getId());
-//        bean.setAllowed(studentRating.getAllowed());
-//        bean.setExamRating(studentRating.getExamRating());
-//        bean.setSemesterRating(studentRating.getSemesterRating());
-//
-//        ExamBean examBean = new ExamBean();
-//        examBean.setId(exam.getId());
-//        examBean.setName(exam.getName());
-//        examBean.setStart(toMillis(exam.getStart()));
-//        examBean.setEnd(toMillis(exam.getEnd()));
-//        examBean.setState(exam.getState());
-//        examBean.setExamRuleId(examRule.getId());
-//        examBean.setDisciplineId(exam.getDiscipline().getId());
-//        examBean.setGroupIds(exam.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
-//
-//        bean.setExam(examBean);
-//
-//        bean.setDisciplineName(discipline.getName());
-//
-//        bean.setTeacher(teacherService.map(teacher));
-//
-//        bean.setQuestionRatingRange(examRule.getQuestionRatingRange());
-//        bean.setExerciseRatingRange(examRule.getExerciseRatingRange());
-//
-//        return bean;
-//    }
+
+    private StudentExamInfoBean mapToStudentBean(StudentRating studentRating) {
+        StudentExamInfoBean bean = new StudentExamInfoBean();
+
+        bean.setId(studentRating.getId());
+        bean.setSemesterRating(studentRating.getSemesterRating());
+        bean.setQuestionRating(studentRating.getQuestionRating());
+        bean.setExerciseRating(studentRating.getExerciseRating());
+        bean.setStudentRatingState(studentRating.getStudentRatingState());
+        bean.setGroupRatingId(studentRating.getGroupRating().getId());
+
+        Exam exam = studentRating.getExam();
+
+        ExamBean examBean = new ExamBean();
+        examBean.setId(exam.getId());
+        examBean.setName(exam.getName());
+        examBean.setStart(toMillis(exam.getStart()));
+        examBean.setEnd(toMillis(exam.getEnd()));
+        examBean.setState(exam.getState());
+        examBean.setDisciplineId(exam.getDiscipline().getId());
+        examBean.setGroupId(exam.getGroup() == null ? null : exam.getGroup().getId());
+        examBean.setOneGroup(exam.isOneGroup());
+        bean.setExam(examBean);
+
+        ExamRule examRule = studentRating.getGroupRating().getExamRule();
+
+        ExamRuleBean examRuleBean = new ExamRuleBean();
+        examRuleBean.setId(examRule.getId());
+        examRuleBean.setName(examRule.getName());
+        examRuleBean.setMaximumExamRating(examRule.getMaximumExamRating());
+        examRuleBean.setMinimalExamRating(examRule.getMinimalExamRating());
+        examRuleBean.setDuration(examRule.getDuration());
+        examRuleBean.setMinimalSemesterRating(examRule.getMinimalSemesterRating());
+        examRuleBean.setExercisesRatingSum(examRule.getExercisesRatingSum());
+        examRuleBean.setQuestionsRatingSum(examRule.getQuestionsRatingSum());
+        examRuleBean.setSingleExerciseDefaultRating(examRule.getSingleExerciseDefaultRating());
+        examRuleBean.setSingleQuestionDefaultRating(examRule.getSingleQuestionDefaultRating());
+        examRuleBean.setDisciplineId(examRule.getDiscipline().getId());
+        examRuleBean.setThemeIds(examRule.getThemes().stream().map(AbstractPersistable::getId).collect(Collectors.toList()));
+        bean.setExamRule(examRuleBean);
+
+        return bean;
+    }
 
 }
