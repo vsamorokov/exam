@@ -33,8 +33,8 @@ public class FullMessageMapper implements Mapper<FullMessageBean, Message> {
                 AccountBean accountBean = new AccountBean();
                 accountBean.setId(account.getId());
                 accountBean.setUsername(account.getUsername());
-                accountBean.setName(accountBean.getName());
-                accountBean.setUsername(accountBean.getUsername());
+                accountBean.setName(account.getName());
+                accountBean.setSurname(account.getSurname());
                 accountBean.setRoles(account.getRoles());
                 fullMessageBean.setAccount(accountBean);
             }
