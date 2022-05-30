@@ -8,7 +8,9 @@ import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.ExamBean;
 import ru.nstu.exam.bean.StudentRatingBean;
 import ru.nstu.exam.bean.full.FullExamBean;
+import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.security.IsTeacher;
+import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.ExamService;
 
 import java.util.List;
@@ -43,15 +45,15 @@ public class ExamController {
     @IsTeacher
     @PostMapping
     @Operation(summary = "Create an exam")
-    public ExamBean createExam(@RequestBody ExamBean createExamBean) {
-        return examService.createExam(createExamBean);
+    public ExamBean createExam(@RequestBody ExamBean createExamBean, @UserAccount Account account) {
+        return examService.createExam(createExamBean, account);
     }
 
     @IsTeacher
     @PutMapping
     @Operation(summary = "Update an exam")
-    public ExamBean updateExam(@RequestBody ExamBean examBean) {
-        return examService.updateExam(examBean);
+    public ExamBean updateExam(@RequestBody ExamBean examBean, @UserAccount Account account) {
+        return examService.updateExam(examBean, account);
     }
 
     @IsTeacher

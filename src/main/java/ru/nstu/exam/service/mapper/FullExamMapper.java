@@ -32,6 +32,7 @@ public class FullExamMapper implements Mapper<FullExamBean, Exam> {
             examBean.setEnd(toMillis(entity.getEnd()));
             examBean.setState(entity.getState());
             examBean.setOneGroup(entity.isOneGroup());
+            examBean.setTeacherId(entity.getTeacher().getId());
             examBean.setDisciplineId(entity.getDiscipline() == null ? null : entity.getDiscipline().getId());
             examBean.setGroupId(entity.getGroup() == null ? null : entity.getGroup().getId());
             fullExamBean.setExam(examBean);

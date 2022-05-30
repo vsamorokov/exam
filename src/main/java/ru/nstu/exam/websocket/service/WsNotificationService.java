@@ -3,11 +3,10 @@ package ru.nstu.exam.websocket.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.ExamBean;
-import ru.nstu.exam.entity.Answer;
-import ru.nstu.exam.entity.Exam;
-import ru.nstu.exam.entity.Message;
-import ru.nstu.exam.entity.StudentRating;
+import ru.nstu.exam.bean.MessageBean;
+import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.NotificationType;
 import ru.nstu.exam.service.NotificationService;
 import ru.nstu.exam.websocket.Notification;
@@ -32,18 +31,15 @@ public class WsNotificationService implements NotificationService {
         examBean.setStart(toMillis(exam.getStart()));
         examBean.setEnd(toMillis(exam.getEnd()));
 
+        Notification notification = new Notification();
+        notification.setTime(System.currentTimeMillis());
+        notification.setData(examBean);
+        notification.setType(type);
+
+        messagingTemplate.convertAndSendToUser(String.valueOf(exam.getTeacher().getAccount().getId()), "/notifications", notification);
+
         for (StudentRating studentRating : exam.getStudentRatings()) {
-            Long id = studentRating.getStudent().getAccount().getId();
-            if (id != null) {
-
-                Notification notification = new Notification();
-                notification.setTime(System.currentTimeMillis());
-                notification.setData(examBean);
-                notification.setReceiverId(id);
-                notification.setType(type);
-
-                messagingTemplate.convertAndSendToUser(id.toString(), "/notifications", notification);
-            }
+            messagingTemplate.convertAndSendToUser(String.valueOf(studentRating.getStudent().getAccount().getId()), "/notifications", notification);
         }
     }
 
@@ -75,11 +71,45 @@ public class WsNotificationService implements NotificationService {
 
     @Override
     public void newMessage(Message message) {
+        StudentRating studentRating = message.getAnswer().getStudentRating();
+        Teacher teacher = studentRating.getExam().getTeacher();
+        Student student = studentRating.getStudent();
 
+        MessageBean messageBean = new MessageBean();
+        messageBean.setId(message.getId());
+        messageBean.setAccountId(message.getAccount().getId());
+        messageBean.setSendTime(toMillis(message.getSendTime()));
+        messageBean.setText(message.getText());
+        messageBean.setArtefactId(message.getArtefact() == null ? null : message.getArtefact().getId());
+
+        Notification notification = new Notification();
+        notification.setTime(System.currentTimeMillis());
+        notification.setData(messageBean);
+        notification.setType(NotificationType.NEW_MESSAGE);
+
+        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", notification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", notification);
     }
 
     @Override
     public void answerStateChanged(Answer answer) {
+        StudentRating studentRating = answer.getStudentRating();
+        Teacher teacher = studentRating.getExam().getTeacher();
+        Student student = studentRating.getStudent();
 
+        AnswerBean answerBean = new AnswerBean();
+        answerBean.setId(answer.getId());
+        answerBean.setState(answer.getState());
+        answerBean.setRating(answer.getRating());
+        answerBean.setNumber(answer.getNumber());
+        answerBean.setTaskId(answer.getTask().getId());
+        answerBean.setStudentRatingId(answer.getStudentRating().getId());
+
+        Notification notification = new Notification();
+        notification.setTime(System.currentTimeMillis());
+        notification.setData(answerBean);
+        notification.setType(NotificationType.NEW_MESSAGE);
+        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", notification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", notification);
     }
 }

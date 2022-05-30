@@ -23,4 +23,6 @@ public class ExamBean extends EntityBean {
     private Long end;
 
     private ExamState state;
+
+    private Long teacherId;
 }

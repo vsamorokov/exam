@@ -12,10 +12,7 @@ import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.service.mapper.FullExamMapper;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
@@ -31,8 +28,9 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     private final NotificationService notificationService;
     private final ReportService reportService;
     private final GroupRatingService groupRatingService;
+    private final TeacherService teacherService;
 
-    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, NotificationService notificationService, ReportService reportService, GroupRatingService groupRatingService) {
+    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, NotificationService notificationService, ReportService reportService, GroupRatingService groupRatingService, TeacherService teacherService) {
         super(repository);
         this.groupService = groupService;
         this.disciplineService = disciplineService;
@@ -41,6 +39,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         this.notificationService = notificationService;
         this.reportService = reportService;
         this.groupRatingService = groupRatingService;
+        this.teacherService = teacherService;
     }
 
     public List<ExamBean> findAll() {
@@ -59,8 +58,11 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(exam);
     }
 
-    public ExamBean createExam(ExamBean examBean) {
+    public ExamBean createExam(ExamBean examBean, Account account) {
         Exam exam = new Exam();
+        Teacher teacher = teacherService.findByAccount(account);
+        checkNotNull(teacher, "Teacher not found");
+        exam.setTeacher(teacher);
         fillExam(exam, examBean);
         exam.setState(REDACTION);
         Exam saved = save(exam);
@@ -70,9 +72,11 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         return map(saved);
     }
 
-    public ExamBean updateExam(ExamBean examBean) {
+    public ExamBean updateExam(ExamBean examBean, Account account) {
         Exam exam = findById(examBean.getId());
         checkNotNull(exam, "Exam with id " + examBean.getId() + " not found");
+        Teacher teacher = teacherService.findByAccount(account);
+        checkTrue(Objects.equals(teacher == null ? null : teacher.getId(), exam.getTeacher().getId()), "Wrong teacher");
 
         checkTrue(ExamState.REDACTION.equals(exam.getState()), "Wrong state");
 
@@ -239,6 +243,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         examBean.setName(entity.getName());
         examBean.setGroupId(entity.getGroup() == null ? null : entity.getGroup().getId());
         examBean.setOneGroup(entity.isOneGroup());
+        examBean.setTeacherId(entity.getTeacher().getId());
         return examBean;
     }
 

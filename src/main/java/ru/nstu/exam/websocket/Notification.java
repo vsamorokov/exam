@@ -7,6 +7,5 @@ import ru.nstu.exam.enums.NotificationType;
 public class Notification {
     private long time;
     private NotificationType type;
-    private Long receiverId;
     private Object data;
 }

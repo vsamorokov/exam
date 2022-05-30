@@ -36,6 +36,10 @@ public class Exam extends NamedEntity {
     @OneToMany(mappedBy = "exam")
     private List<StudentRating> studentRatings;
 
+    @ManyToOne
+    @JoinColumn(name = "teacher_id", nullable = false)
+    private Teacher teacher;
+
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private ExamState state;

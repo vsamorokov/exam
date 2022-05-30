@@ -13,5 +13,8 @@
     <changeSet id="3" author="vsamorokov">
         <sqlFile path="st_rat_notnull_fix.sql" relativeToChangelogFile="true"/>
     </changeSet>
+    <changeSet id="4" author="vsamorokov">
+        <sqlFile path="add-teacher-to-exam.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
