@@ -183,9 +183,7 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
 
         answer.setRating(rating);
         answer.setState(RATED);
-        Answer saved = save(answer);
-        studentRatingService.answerStateChanged(saved);
-        return saved;
+        return save(answer);
     }
 
     @Override

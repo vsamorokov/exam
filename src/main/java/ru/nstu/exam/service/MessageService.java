@@ -76,9 +76,7 @@ public class MessageService extends BasePersistentService<Message, MessageBean, 
         messageBean.setAccountId(entity.getAccount().getId());
         messageBean.setText(entity.getText());
         messageBean.setSendTime(toMillis(entity.getSendTime()));
-        if (entity.getArtefact() != null) {
-            messageBean.setArtefactId(entity.getArtefact().getId());
-        }
+        messageBean.setArtefactId(entity.getArtefact() == null ? null : entity.getArtefact().getId());
         return messageBean;
     }
 
