@@ -38,3 +38,6 @@ auth:
 file:
   local-dir: data/files
   max-size-bytes: 41943040 # 40MB
+
+firebase:
+  config: serviceAccountKey.json

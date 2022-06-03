@@ -40,8 +40,8 @@ public class StudentRatingController {
     @IsTeacher
     @PutMapping
     @Operation(summary = "Update Student rating", description = "Updates semester rating and moves to Allowed or Not Allowed states")
-    public void update(@RequestBody StudentRatingBean studentRatingBean) {
-        studentRatingService.update(studentRatingBean);
+    public StudentRatingBean update(@RequestBody StudentRatingBean studentRatingBean) {
+        return studentRatingService.update(studentRatingBean);
     }
 
     @PutMapping("/state")

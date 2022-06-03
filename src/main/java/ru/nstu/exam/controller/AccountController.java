@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.nstu.exam.bean.AccountBean;
+import ru.nstu.exam.bean.FirebaseToken;
 import ru.nstu.exam.entity.Account;
+import ru.nstu.exam.notification.firebase.ClientTokenRegistry;
 import ru.nstu.exam.security.IsAdmin;
 import ru.nstu.exam.security.UserAccount;
 import ru.nstu.exam.service.AccountService;
@@ -19,6 +21,7 @@ import java.util.List;
 public class AccountController {
 
     private final AccountService accountService;
+    private final ClientTokenRegistry registry;
 
     @IsAdmin
     @GetMapping
@@ -57,5 +60,10 @@ public class AccountController {
     @Operation(summary = "Create an account", description = "Used by admins to create admins")
     public AccountBean createAccount(@RequestBody AccountBean accountBean) {
         return accountService.createAccount(accountBean);
+    }
+
+    @PostMapping("/firebase-token")
+    public void addToken(@RequestBody FirebaseToken token, @UserAccount Account account) {
+        registry.addToken(account, token.getToken());
     }
 }

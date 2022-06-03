@@ -1,4 +1,4 @@
-package ru.nstu.exam.websocket.service;
+package ru.nstu.exam.notification.websocket;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -8,8 +8,7 @@ import ru.nstu.exam.bean.ExamBean;
 import ru.nstu.exam.bean.MessageBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.NotificationType;
-import ru.nstu.exam.service.NotificationService;
-import ru.nstu.exam.websocket.Notification;
+import ru.nstu.exam.notification.NotificationService;
 
 import static ru.nstu.exam.utils.Utils.toMillis;
 
@@ -31,15 +30,15 @@ public class WsNotificationService implements NotificationService {
         examBean.setStart(toMillis(exam.getStart()));
         examBean.setEnd(toMillis(exam.getEnd()));
 
-        Notification notification = new Notification();
-        notification.setTime(System.currentTimeMillis());
-        notification.setData(examBean);
-        notification.setType(type);
+        WsNotification wsNotification = new WsNotification();
+        wsNotification.setTime(System.currentTimeMillis());
+        wsNotification.setData(examBean);
+        wsNotification.setType(type);
 
-        messagingTemplate.convertAndSendToUser(String.valueOf(exam.getTeacher().getAccount().getId()), "/notifications", notification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(exam.getTeacher().getAccount().getId()), "/notifications", wsNotification);
 
         for (StudentRating studentRating : exam.getStudentRatings()) {
-            messagingTemplate.convertAndSendToUser(String.valueOf(studentRating.getStudent().getAccount().getId()), "/notifications", notification);
+            messagingTemplate.convertAndSendToUser(String.valueOf(studentRating.getStudent().getAccount().getId()), "/notifications", wsNotification);
         }
     }
 
@@ -82,13 +81,13 @@ public class WsNotificationService implements NotificationService {
         messageBean.setText(message.getText());
         messageBean.setArtefactId(message.getArtefact() == null ? null : message.getArtefact().getId());
 
-        Notification notification = new Notification();
-        notification.setTime(System.currentTimeMillis());
-        notification.setData(messageBean);
-        notification.setType(NotificationType.NEW_MESSAGE);
+        WsNotification wsNotification = new WsNotification();
+        wsNotification.setTime(System.currentTimeMillis());
+        wsNotification.setData(messageBean);
+        wsNotification.setType(NotificationType.NEW_MESSAGE);
 
-        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", notification);
-        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", notification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", wsNotification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", wsNotification);
     }
 
     @Override
@@ -105,11 +104,11 @@ public class WsNotificationService implements NotificationService {
         answerBean.setTaskId(answer.getTask().getId());
         answerBean.setStudentRatingId(answer.getStudentRating().getId());
 
-        Notification notification = new Notification();
-        notification.setTime(System.currentTimeMillis());
-        notification.setData(answerBean);
-        notification.setType(NotificationType.NEW_MESSAGE);
-        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", notification);
-        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", notification);
+        WsNotification wsNotification = new WsNotification();
+        wsNotification.setTime(System.currentTimeMillis());
+        wsNotification.setData(answerBean);
+        wsNotification.setType(NotificationType.ANSWER_CHANGED);
+        messagingTemplate.convertAndSendToUser(String.valueOf(teacher.getAccount().getId()), "/notifications", wsNotification);
+        messagingTemplate.convertAndSendToUser(String.valueOf(student.getAccount().getId()), "/notifications", wsNotification);
     }
 }

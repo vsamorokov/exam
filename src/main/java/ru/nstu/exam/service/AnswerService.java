@@ -13,6 +13,7 @@ import ru.nstu.exam.bean.student.StudentTaskBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.AnswerState;
 import ru.nstu.exam.enums.ExamState;
+import ru.nstu.exam.notification.NotificationService;
 import ru.nstu.exam.repository.AnswerRepository;
 import ru.nstu.exam.security.UserRole;
 import ru.nstu.exam.service.listener.ExamStateChangeListener;
@@ -34,15 +35,15 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
     private final MessageService messageService;
     private final FullAnswerMapper answerMapper;
     private final StudentRatingService studentRatingService;
-    private final NotificationService notificationService;
+    private final List<NotificationService> notificationServices;
     private final TaskService taskService;
 
-    public AnswerService(AnswerRepository repository, MessageService messageService, FullAnswerMapper answerMapper, @Lazy StudentRatingService studentRatingService, NotificationService notificationService, @Lazy TaskService taskService) {
+    public AnswerService(AnswerRepository repository, MessageService messageService, FullAnswerMapper answerMapper, @Lazy StudentRatingService studentRatingService, List<NotificationService> notificationServices, @Lazy TaskService taskService) {
         super(repository);
         this.messageService = messageService;
         this.answerMapper = answerMapper;
         this.studentRatingService = studentRatingService;
-        this.notificationService = notificationService;
+        this.notificationServices = notificationServices;
         this.taskService = taskService;
     }
 
@@ -136,7 +137,7 @@ public class AnswerService extends BasePersistentService<Answer, AnswerBean, Ans
     public Answer save(Answer entity) {
         Answer saved = super.save(entity);
         studentRatingService.answerStateChanged(saved);
-        notificationService.answerStateChanged(saved);
+        notificationServices.forEach(s -> s.answerStateChanged(saved));
         return saved;
     }
 

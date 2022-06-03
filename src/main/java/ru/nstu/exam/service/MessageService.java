@@ -9,9 +9,11 @@ import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.entity.Answer;
 import ru.nstu.exam.entity.Artefact;
 import ru.nstu.exam.entity.Message;
+import ru.nstu.exam.notification.NotificationService;
 import ru.nstu.exam.repository.MessageRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static ru.nstu.exam.exception.ExamException.userError;
@@ -22,12 +24,12 @@ import static ru.nstu.exam.utils.Utils.toMillis;
 public class MessageService extends BasePersistentService<Message, MessageBean, MessageRepository> {
 
     private final ArtefactService artefactService;
-    private final NotificationService notificationService;
+    private final List<NotificationService> notificationServices;
 
-    public MessageService(MessageRepository repository, ArtefactService artefactService, NotificationService notificationService) {
+    public MessageService(MessageRepository repository, ArtefactService artefactService, List<NotificationService> notificationServices) {
         super(repository);
         this.artefactService = artefactService;
-        this.notificationService = notificationService;
+        this.notificationServices = notificationServices;
     }
 
     public Page<MessageBean> findAllByAnswer(Answer answer, Pageable pageable) {
@@ -39,7 +41,7 @@ public class MessageService extends BasePersistentService<Message, MessageBean, 
         message.setAnswer(answer);
         message.setAccount(account);
         Message saved = save(message);
-        notificationService.newMessage(saved);
+        notificationServices.forEach(s -> s.newMessage(saved));
         return map(saved);
     }
 

@@ -28,3 +28,6 @@ file:
 
 exam-period:
   auto-update-enabled: false
+
+firebase:
+  config: serviceAccountKey.json

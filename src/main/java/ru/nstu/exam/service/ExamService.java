@@ -8,6 +8,7 @@ import ru.nstu.exam.bean.full.FullExamBean;
 import ru.nstu.exam.entity.*;
 import ru.nstu.exam.enums.ExamState;
 import ru.nstu.exam.enums.StudentRatingState;
+import ru.nstu.exam.notification.NotificationService;
 import ru.nstu.exam.repository.ExamRepository;
 import ru.nstu.exam.service.mapper.FullExamMapper;
 
@@ -25,18 +26,18 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     private final DisciplineService disciplineService;
     private final StudentRatingService studentRatingService;
     private final FullExamMapper fullExamMapper;
-    private final NotificationService notificationService;
+    private final List<NotificationService> notificationServices;
     private final ReportService reportService;
     private final GroupRatingService groupRatingService;
     private final TeacherService teacherService;
 
-    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, NotificationService notificationService, ReportService reportService, GroupRatingService groupRatingService, TeacherService teacherService) {
+    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, List<NotificationService> notificationServices, ReportService reportService, GroupRatingService groupRatingService, TeacherService teacherService) {
         super(repository);
         this.groupService = groupService;
         this.disciplineService = disciplineService;
         this.studentRatingService = studentRatingService;
         this.fullExamMapper = fullExamMapper;
-        this.notificationService = notificationService;
+        this.notificationServices = notificationServices;
         this.reportService = reportService;
         this.groupRatingService = groupRatingService;
         this.teacherService = teacherService;
@@ -70,7 +71,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         Exam saved = save(exam);
 
         studentRatingService.examCreated(saved);
-        notificationService.examCreated(saved);
+        notificationServices.forEach(s -> s.examCreated(saved));
         return map(saved);
     }
 
@@ -154,7 +155,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         Exam saved = save(exam);
 
         if (READY.equals(newState)) {
-            notificationService.examReady(exam);
+            notificationServices.forEach(s -> s.examReady(exam));
         }
 
         return map(saved);
@@ -196,7 +197,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
         studentRatingService.examStarted(saved);
 
-        notificationService.examStarted(saved);
+        notificationServices.forEach(s -> s.examStarted(saved));
         return saved;
     }
 
@@ -207,7 +208,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
         studentRatingService.examFinished(saved);
 
-        notificationService.examFinished(saved);
+        notificationServices.forEach(s -> s.examFinished(saved));
         return saved;
     }
 
@@ -218,7 +219,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         Exam saved = save(exam);
 
         reportService.generateReport(saved);
-        notificationService.examClosed(saved);
+        notificationServices.forEach(s -> s.examClosed(saved));
         return saved;
     }
 
@@ -271,7 +272,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
             if (progressExam.getEnd().isAfter(LocalDateTime.now(UTC))) {
                 progressExam.setState(FINISHED);
                 Exam saved = save(progressExam);
-                notificationService.examFinished(saved);
+                notificationServices.forEach(s -> s.examFinished(saved));
             }
         }
     }

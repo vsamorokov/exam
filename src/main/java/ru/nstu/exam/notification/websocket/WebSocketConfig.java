@@ -1,4 +1,4 @@
-package ru.nstu.exam.websocket;
+package ru.nstu.exam.notification.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +17,6 @@ import java.util.List;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry
                                                registry) {
@@ -27,8 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/user", "/answer");
-        config.setApplicationDestinationPrefixes("/message");
+        config.enableSimpleBroker("/user");
     }
 
     @Override
@@ -41,6 +39,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         messageConverters.add(converter);
         return false; // Do not include default converter
     }
-
-
 }

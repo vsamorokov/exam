@@ -1,4 +1,4 @@
-package ru.nstu.exam.service;
+package ru.nstu.exam.notification;
 
 import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.service.listener.AnswerStateChangeListener;

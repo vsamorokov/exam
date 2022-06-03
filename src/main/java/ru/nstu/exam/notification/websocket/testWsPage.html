@@ -14,15 +14,15 @@
         }
 
         function connect() {
-            const socket = new SockJS('http://localhost:8080/ws')
-            stompClient = Stomp.over(socket)
+            const socket = new SockJS('http://217.71.129.139:4502/ws')
+            stompClient = Stomp.client('http://217.71.129.139:4502/ws')
             window.connection = stompClient.connect({}, function (frame) {
                 setConnected(true)
                 console.log('Connected: ' + frame)
 
-                subscribe('/user/61/notifications', function (messageOutput) {
+                subscribe('/user/261/notifications', function (messageOutput) {
                     console.log("Got Notification message", messageOutput)
-                    showMessageOutput(JSON.parse(messageOutput.body), 'notification')
+                    showMessageOutput(JSON.parse(messageOutput.body), 'wsNotification')
                 })
             })
         }
@@ -45,10 +45,10 @@
         // }
 
         function showMessageOutput(messageOutput, type) {
-            const response = document.getElementById(type === 'notification' ? 'response-not' : 'response-ans');
+            const response = document.getElementById(type === 'wsNotification' ? 'response-not' : 'response-ans');
             const p = document.createElement('p');
             p.style.wordWrap = 'break-word'
-            p.appendChild(document.createTextNode(messageOutput.toString()))
+            p.appendChild(document.createTextNode(messageOutput))
             response.appendChild(p)
         }
     </script>

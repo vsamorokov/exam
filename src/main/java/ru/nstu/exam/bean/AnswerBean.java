@@ -16,7 +16,7 @@ public class AnswerBean extends EntityBean {
 
     private Long studentRatingId;
 
-    private Integer number; // index of an answer in ticket
+    private Integer number;
 
     private AnswerState state;
 }
