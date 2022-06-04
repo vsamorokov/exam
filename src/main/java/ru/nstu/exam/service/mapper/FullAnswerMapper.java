@@ -9,6 +9,7 @@ import ru.nstu.exam.entity.Answer;
 import ru.nstu.exam.entity.Message;
 import ru.nstu.exam.entity.Task;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ public class FullAnswerMapper implements Mapper<FullAnswerBean, Answer> {
             fullAnswerBean.setMessages(
                     CollectionUtils.emptyIfNull(messages).stream()
                             .map(m -> messageMapper.map(m, level - 1))
+                            .sorted(Comparator.comparingLong(m -> m.getMessage().getSendTime()))
                             .collect(Collectors.toList())
             );
         }
