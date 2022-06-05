@@ -11,6 +11,10 @@ public interface ExamStateChangeListener {
 
     }
 
+    default void examTimeSet(Exam exam) {
+
+    }
+
     default void examStarted(Exam exam) {
 
     }
@@ -20,6 +24,10 @@ public interface ExamStateChangeListener {
     }
 
     default void examClosed(Exam saved) {
+
+    }
+
+    default void examDeleted(Exam exam) {
 
     }
 }

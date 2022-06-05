@@ -186,7 +186,10 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
                 exam.setEnd(toLocalDateTime(start).plusMinutes(duration));
             }
         }
-        return save(exam);
+        Exam saved = save(exam);
+        notificationServices.forEach(s -> s.examTimeSet(saved));
+
+        return saved;
     }
 
     private Exam startExam(Exam exam) {
@@ -232,7 +235,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     @Override
     public void delete(Exam exam) {
         checkTrue(exam.getState().equals(CLOSED) || exam.getState().isBefore(PROGRESS), "Wrong exam state");
-        // TODO: 05.06.2022 Remove exam from studentRatings
+        studentRatingService.examDeleted(exam);
         super.delete(exam);
     }
 

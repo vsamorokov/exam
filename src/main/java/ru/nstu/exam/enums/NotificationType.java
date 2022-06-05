@@ -4,6 +4,7 @@ public enum NotificationType {
 
     EXAM_CREATED,
     EXAM_READY,
+    EXAM_TIME_SET,
     EXAM_STARTED,
     EXAM_FINISHED,
     EXAM_CLOSED,

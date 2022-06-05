@@ -29,6 +29,11 @@ public class WsNotificationService implements NotificationService {
     }
 
     @Override
+    public void examTimeSet(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_TIME_SET);
+    }
+
+    @Override
     public void examStarted(Exam exam) {
         sendExamNotification(exam, NotificationType.EXAM_STARTED);
     }

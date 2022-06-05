@@ -169,6 +169,15 @@ public class StudentRatingService
         }
     }
 
+    @Override
+    public void examDeleted(Exam exam) {
+        for (StudentRating studentRating : exam.getStudentRatings()) {
+            studentRating.setExam(null);
+            studentRating.setStudentRatingState(ALLOWED);
+            save(studentRating);
+        }
+    }
+
     public StudentRatingBean updateState(StudentRatingBean bean) {
         StudentRating studentRating = findById(bean.getId());
         checkNotNull(studentRating, String.format("Student rating with id %s not found", bean.getId()));
