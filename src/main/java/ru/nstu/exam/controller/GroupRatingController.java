@@ -11,7 +11,7 @@ import ru.nstu.exam.service.GroupRatingService;
 import java.util.List;
 
 @RestController
-@RequestMapping("group-ratings")
+@RequestMapping("/group-ratings")
 @RequiredArgsConstructor
 @Tag(name = "Group Rating")
 public class GroupRatingController {

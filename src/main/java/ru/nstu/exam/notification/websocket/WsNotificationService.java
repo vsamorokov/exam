@@ -18,6 +18,31 @@ public class WsNotificationService implements NotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
 
+    @Override
+    public void examCreated(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_CREATED);
+    }
+
+    @Override
+    public void examReady(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_READY);
+    }
+
+    @Override
+    public void examStarted(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_STARTED);
+    }
+
+    @Override
+    public void examFinished(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_FINISHED);
+    }
+
+    @Override
+    public void examClosed(Exam exam) {
+        sendExamNotification(exam, NotificationType.EXAM_CLOSED);
+    }
+
     private void sendExamNotification(Exam exam, NotificationType type) {
 
         ExamBean examBean = new ExamBean();
@@ -40,32 +65,6 @@ public class WsNotificationService implements NotificationService {
         for (StudentRating studentRating : exam.getStudentRatings()) {
             messagingTemplate.convertAndSendToUser(String.valueOf(studentRating.getStudent().getAccount().getId()), "/notifications", wsNotification);
         }
-    }
-
-    @Override
-    public void examCreated(Exam exam) {
-        sendExamNotification(exam, NotificationType.EXAM_CREATED);
-    }
-
-    @Override
-    public void examReady(Exam exam) {
-        sendExamNotification(exam, NotificationType.EXAM_READY);
-    }
-
-    @Override
-    public void examStarted(Exam exam) {
-        sendExamNotification(exam, NotificationType.EXAM_STARTED);
-
-    }
-
-    @Override
-    public void examFinished(Exam exam) {
-        sendExamNotification(exam, NotificationType.EXAM_FINISHED);
-    }
-
-    @Override
-    public void examClosed(Exam exam) {
-        sendExamNotification(exam, NotificationType.EXAM_CLOSED);
     }
 
     @Override

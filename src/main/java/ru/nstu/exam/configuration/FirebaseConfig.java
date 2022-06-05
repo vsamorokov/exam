@@ -21,8 +21,12 @@ public class FirebaseConfig {
     @PostConstruct
     public void init() {
         try {
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.fromStream(new ClassPathResource(firebaseConfig).getInputStream())).build();
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(
+                            GoogleCredentials
+                                    .fromStream(new ClassPathResource(firebaseConfig).getInputStream())
+                    )
+                    .build();
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
                 log.info("Firebase application has been initialized");

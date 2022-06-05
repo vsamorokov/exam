@@ -14,8 +14,7 @@
         }
 
         function connect() {
-            const socket = new SockJS('http://217.71.129.139:4502/ws')
-            stompClient = Stomp.client('http://217.71.129.139:4502/ws')
+            stompClient = Stomp.over(new SockJS('http://217.71.129.139:4502/ws'))
             window.connection = stompClient.connect({}, function (frame) {
                 setConnected(true)
                 console.log('Connected: ' + frame)

@@ -232,6 +232,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     @Override
     public void delete(Exam exam) {
         checkTrue(exam.getState().equals(CLOSED) || exam.getState().isBefore(PROGRESS), "Wrong exam state");
+        // TODO: 05.06.2022 Remove exam from studentRatings
         super.delete(exam);
     }
 

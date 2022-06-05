@@ -26,8 +26,8 @@ public class ExamController {
     @IsTeacher
     @GetMapping
     @Operation(summary = "Get all exams")
-    public List<ExamBean> getAll() {
-        return examService.findAll();
+    public List<ExamBean> getAll(@UserAccount Account account) {
+        return examService.findAll(account);
     }
 
     @GetMapping("/{examId}")

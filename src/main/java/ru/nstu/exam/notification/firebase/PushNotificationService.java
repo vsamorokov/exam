@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static ru.nstu.exam.utils.Utils.toMillis;
@@ -128,7 +127,7 @@ public class PushNotificationService implements NotificationService {
         sendNotification(type, examBean, ids);
     }
 
-    private void sendNotification(NotificationType type, Object data, Set<Long> receivers) throws ExecutionException, InterruptedException, JsonProcessingException {
+    private void sendNotification(NotificationType type, Object data, Set<Long> receivers) throws JsonProcessingException {
         com.google.firebase.messaging.Message.Builder builder = com.google.firebase.messaging.Message.builder()
                 .setNotification(
                         Notification.builder()

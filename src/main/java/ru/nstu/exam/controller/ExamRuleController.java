@@ -52,4 +52,11 @@ public class ExamRuleController {
     public ExamRuleBean update(@RequestBody ExamRuleBean examRuleBean) {
         return examRuleService.updateExamRule(examRuleBean);
     }
+
+    @IsTeacher
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete an exam rule")
+    public void delete(@PathVariable Long id) {
+        examRuleService.delete(id);
+    }
 }

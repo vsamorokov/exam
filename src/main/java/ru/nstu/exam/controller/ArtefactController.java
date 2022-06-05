@@ -24,13 +24,13 @@ public class ArtefactController {
         return artefactService.uploadFile(file);
     }
 
-    @GetMapping(value = "/{artefactId}/download")
+    @GetMapping("/{artefactId}/download")
     @Operation(summary = "Download a file")
     public void downloadFile(@PathVariable Long artefactId, HttpServletResponse response) {
         artefactService.downloadFile(artefactId, response);
     }
 
-    @GetMapping(value = "/{artefactId}/info")
+    @GetMapping("/{artefactId}/info")
     @Operation(summary = "Get info about file")
     public ArtefactBean getInfo(@PathVariable Long artefactId) {
         return artefactService.getInfo(artefactId);
