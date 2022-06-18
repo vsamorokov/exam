@@ -40,4 +40,5 @@ file:
   max-size-bytes: 41943040 # 40MB
 
 firebase:
+  enabled: true
   config: serviceAccountKey.json

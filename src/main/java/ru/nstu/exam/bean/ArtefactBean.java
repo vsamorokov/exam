@@ -9,10 +9,7 @@ import ru.nstu.exam.entity.ArtefactType;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ArtefactBean extends EntityBean {
-
     private Long fileSize;
-
     private ArtefactType artefactType;
-
     private String fileName;
 }

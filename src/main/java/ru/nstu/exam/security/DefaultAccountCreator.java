@@ -14,7 +14,7 @@ import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "account.default.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "account.default", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class DefaultAccountCreator {
 
     @Value("${account.default.username:admin}")

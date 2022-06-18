@@ -9,7 +9,5 @@ import java.util.List;
 
 @Repository
 public interface AnswerRepository extends PersistableEntityRepository<Answer> {
-
     List<Answer> findAllByStudentRating(StudentRating studentRating, Pageable pageable);
-
 }

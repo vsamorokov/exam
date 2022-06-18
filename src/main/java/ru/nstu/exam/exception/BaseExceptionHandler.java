@@ -13,7 +13,7 @@ public class BaseExceptionHandler {
     protected ResponseEntity<String> handleExam(ExamException ex) {
         log.error("Exam exception occurred", ex);
 
-        return ResponseEntity.badRequest().body(ex.getMessage());
+        return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
     }
 
     @ExceptionHandler(value = {Exception.class})

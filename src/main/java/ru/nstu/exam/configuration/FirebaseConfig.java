@@ -5,14 +5,19 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import ru.nstu.exam.notification.firebase.ClientTokenRegistry;
+import ru.nstu.exam.notification.firebase.PushNotificationService;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 
 @Slf4j
 @Configuration
+@ConditionalOnProperty(prefix = "firebase", name = "enabled", havingValue = "true")
 public class FirebaseConfig {
 
     @Value("${firebase.config}")
@@ -34,5 +39,10 @@ public class FirebaseConfig {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    @Bean
+    public PushNotificationService pushNotificationService(ClientTokenRegistry clientTokenRegistry) {
+        return new PushNotificationService(clientTokenRegistry);
     }
 }

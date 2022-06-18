@@ -31,7 +31,15 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
     private final GroupRatingService groupRatingService;
     private final TeacherService teacherService;
 
-    public ExamService(ExamRepository repository, GroupService groupService, DisciplineService disciplineService, StudentRatingService studentRatingService, FullExamMapper fullExamMapper, List<NotificationService> notificationServices, ReportService reportService, GroupRatingService groupRatingService, TeacherService teacherService) {
+    public ExamService(ExamRepository repository,
+                       GroupService groupService,
+                       DisciplineService disciplineService,
+                       StudentRatingService studentRatingService,
+                       FullExamMapper fullExamMapper,
+                       List<NotificationService> notificationServices,
+                       ReportService reportService,
+                       GroupRatingService groupRatingService,
+                       TeacherService teacherService) {
         super(repository);
         this.groupService = groupService;
         this.disciplineService = disciplineService;
@@ -163,28 +171,28 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
     private Exam setTime(Exam exam, ExamBean examBean) {
         checkTrue(TIME_SET.isAllowedFor(exam), "Wrong state");
-        Long start = examBean.getStart();
-        checkNotNull(start, "Exam start cannot be null");
-        exam.setStart(toLocalDateTime(start));
+        checkNotNull(examBean.getStart(), "Exam start cannot be null");
+        LocalDateTime start = toLocalDateTime(examBean.getStart());
+        exam.setStart(start);
         exam.setState(TIME_SET);
-        Long end = examBean.getEnd();
-        if (end != null) {
-            checkTrue(toLocalDateTime(start).isAfter(toLocalDateTime(end)), "End must be after start");
-            exam.setEnd(toLocalDateTime(end));
+        if (examBean.getEnd() != null) {
+            LocalDateTime end = toLocalDateTime(examBean.getEnd());
+            checkTrue(end.isAfter(start), "End must be after start");
+            exam.setEnd(end);
         } else { // From duration
+            int duration;
             if (exam.isOneGroup()) {
                 GroupRating groupRating = groupRatingService.find(exam.getDiscipline(), exam.getGroup());
-                Integer duration = groupRating.getExamRule().getDuration();
-                exam.setEnd(toLocalDateTime(start).plusMinutes(duration));
+                duration = groupRating.getExamRule().getDuration();
             } else {
-                Integer duration = exam.getStudentRatings().stream()
+                duration = exam.getStudentRatings().stream()
                         .map(StudentRating::getGroupRating)
                         .map(GroupRating::getExamRule)
                         .map(ExamRule::getDuration)
                         .max(Comparator.comparingInt(o -> o))
                         .orElse(0);
-                exam.setEnd(toLocalDateTime(start).plusMinutes(duration));
             }
+            exam.setEnd(start.plusMinutes(duration));
         }
         Exam saved = save(exam);
         notificationServices.forEach(s -> s.examTimeSet(saved));
@@ -220,6 +228,8 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
         exam.setState(CLOSED);
 
         Exam saved = save(exam);
+
+        studentRatingService.examClosed(saved);
 
         reportService.generateReport(saved);
         notificationServices.forEach(s -> s.examClosed(saved));
@@ -274,9 +284,7 @@ public class ExamService extends BasePersistentService<Exam, ExamBean, ExamRepos
 
         for (Exam progressExam : progressExams) {
             if (progressExam.getEnd().isAfter(LocalDateTime.now(UTC))) {
-                progressExam.setState(FINISHED);
-                Exam saved = save(progressExam);
-                notificationServices.forEach(s -> s.examFinished(saved));
+                finishExam(progressExam);
             }
         }
     }

@@ -151,7 +151,12 @@ public class StudentRatingService
     @Override
     public void examStarted(Exam exam) {
         for (StudentRating studentRating : exam.getStudentRatings()) {
-            studentRating.setStudentRatingState(StudentRatingState.WAITING_TO_APPEAR);
+            if (studentRating.getStudentRatingState().equals(ASSIGNED_TO_EXAM)) {
+                studentRating.setStudentRatingState(StudentRatingState.WAITING_TO_APPEAR);
+            }
+            if (studentRating.getStudentRatingState().equals(FINISHED)) {
+                studentRating.setStudentRatingState(PASSING);
+            }
             save(studentRating);
         }
     }
@@ -164,6 +169,16 @@ public class StudentRatingService
                 save(studentRating);
             } else if (StudentRatingState.WAITING_TO_APPEAR.equals(studentRating.getStudentRatingState())) {
                 studentRating.setStudentRatingState(StudentRatingState.ABSENT);
+                save(studentRating);
+            }
+        }
+    }
+
+    @Override
+    public void examClosed(Exam exam) {
+        for (StudentRating studentRating : exam.getStudentRatings()) {
+            if (FINISHED.equals(studentRating.getStudentRatingState())) {
+                studentRating.setStudentRatingState(RATED);
                 save(studentRating);
             }
         }

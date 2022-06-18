@@ -10,7 +10,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.nstu.exam.bean.AnswerBean;
 import ru.nstu.exam.bean.ExamBean;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 import static ru.nstu.exam.utils.Utils.toMillis;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class PushNotificationService implements NotificationService {
 
@@ -145,6 +143,7 @@ public class PushNotificationService implements NotificationService {
         for (Long receiver : receivers) {
             String token = clientTokenRegistry.getToken(receiver);
             if (StringUtils.hasText(token)) {
+                log.info("Sending Firebase notification {} to Account {}", type, receiver);
                 futures.add(FirebaseMessaging.getInstance().sendAsync(builder.setToken(token).build()));
             }
         }

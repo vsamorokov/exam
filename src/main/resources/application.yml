@@ -26,8 +26,9 @@ file:
   local-dir: /opt/exam/data/files
   max-size-bytes: 41943040 # 40MB
 
-exam-period:
+exam:
   auto-update-enabled: false
 
 firebase:
+  enabled: true
   config: serviceAccountKey.json

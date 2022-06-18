@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ExamRuleRepository extends PersistableEntityRepository<ExamRule> {
-
     List<ExamRule> findAllByDiscipline(Discipline discipline);
 }

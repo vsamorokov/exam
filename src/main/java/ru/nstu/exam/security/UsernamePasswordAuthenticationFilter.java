@@ -11,7 +11,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -83,7 +82,7 @@ public class UsernamePasswordAuthenticationFilter extends OncePerRequestFilter {
 
     private static Authentication convert(HttpServletRequest request) {
         String header = request.getHeader("X-Authentication");
-        if(header == null) {
+        if (header == null) {
             throw new BadCredentialsException("No basic authentication token");
         }
         byte[] authHeader = header.trim().getBytes(StandardCharsets.UTF_8);
@@ -94,6 +93,8 @@ public class UsernamePasswordAuthenticationFilter extends OncePerRequestFilter {
         if (delim == -1) {
             throw new BadCredentialsException("Invalid basic authentication token");
         }
-        return new UsernamePasswordAuthenticationToken(token.substring(0, delim), token.substring(delim + 1));
+        return new UsernamePasswordAuthenticationToken(
+                token.substring(0, delim), token.substring(delim + 1)
+        );
     }
 }

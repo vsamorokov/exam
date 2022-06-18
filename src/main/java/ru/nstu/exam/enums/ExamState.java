@@ -14,7 +14,8 @@ public enum ExamState {
     TIME_SET(1, 3),
     PROGRESS(4),
     FINISHED(3, 5),
-    CLOSED();
+    CLOSED(),
+    ;
 
     private final Set<Integer> allowedNext;
 

@@ -8,10 +8,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ExamSchedulingService {
-
     private final ExamService examService;
 
-    @Value("${exam-period.auto-update-enabled:false}")
+    @Value("${exam.auto-update-enabled:false}")
     private boolean updateEnabled;
 
     @Scheduled(fixedDelay = 5000) // 5 sec
@@ -20,5 +19,4 @@ public class ExamSchedulingService {
             examService.updateExamStates();
         }
     }
-
 }

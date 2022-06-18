@@ -87,7 +87,7 @@ public class AccessTokenService {
         if (CollectionUtils.isEmpty(tokens)) {
             return;
         }
-        tokens.forEach(tokenRepository::delete);
+        tokenRepository.deleteAll(tokens);
         log.info("{} expired tokens deleted", tokens.size());
     }
 }

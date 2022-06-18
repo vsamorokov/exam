@@ -13,8 +13,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import ru.nstu.exam.entity.Account;
 import ru.nstu.exam.service.AccountService;
 
-import java.util.Objects;
-
 
 @RequiredArgsConstructor
 public class UserAccountAnnotationMethodArgumentResolver implements HandlerMethodArgumentResolver {
@@ -27,14 +25,15 @@ public class UserAccountAnnotationMethodArgumentResolver implements HandlerMetho
     }
 
     @Override
-    public Object resolveArgument(@NonNull MethodParameter parameter, ModelAndViewContainer mavContainer, @NonNull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-
+    public Object resolveArgument(@NonNull MethodParameter parameter,
+                                  ModelAndViewContainer mavContainer,
+                                  @NonNull NativeWebRequest webRequest,
+                                  WebDataBinderFactory binderFactory
+    ) {
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        if(!StringUtils.hasText(name)) {
+        if (!StringUtils.hasText(name)) {
             return WebArgumentResolver.UNRESOLVED;
         }
-
         return accountService.findAccountByUsername(name);
     }
 }
